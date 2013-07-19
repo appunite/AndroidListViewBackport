@@ -12,6 +12,7 @@ apply plugin: 'maven'
 
 repositories {
     mavenCentral()
+    maven { url "http://192.158.30.128/repository/" }
 }
 
 configurations {
@@ -21,9 +22,10 @@ configurations {
 dependencies {
     deployerJars "org.apache.maven.wagon:wagon-ssh:2.2"
     compile "com.google.guava:guava:14.0.1"
+    compile "com.appunite:android-support-v4:[7,)"
 }
 
-version = "2.2"
+version = "1.0"
 archivesBaseName = "listviewbackport"
 group = "com.appunite"
 

@@ -10,14 +10,12 @@ apply plugin: 'android'
 
 repositories {
     mavenCentral()
-    maven {
-        url "http://192.158.30.128/repository/"
-    }
+    maven { url "http://192.158.30.128/repository/" }
 }
 
 dependencies {
     compile project(":library")
-    //compile "com.appunite:auremoteimageloader:2.2"
+    //compile "com.appunite:listviewbackport:1.0"
 }
 
 android {

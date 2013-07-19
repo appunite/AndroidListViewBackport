@@ -16,12 +16,9 @@
 
 package com.appunite.list;
 
-import com.android.internal.R;
-import com.android.internal.util.Predicate;
-import com.google.android.collect.Lists;
+import com.google.common.collect.Lists;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -29,7 +26,6 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
-import android.util.MathUtils;
 import android.util.SparseBooleanArray;
 import android.view.FocusFinder;
 import android.view.KeyEvent;
@@ -38,9 +34,11 @@ import android.view.View;
 import android.view.ViewDebug;
 import android.view.ViewGroup;
 import android.view.ViewParent;
-import android.view.ViewRootImpl;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.widget.ArrayAdapter;
+import android.widget.Checkable;
+import android.widget.ListAdapter;
 import android.widget.RemoteViews.RemoteView;
 
 import java.util.ArrayList;
@@ -136,43 +134,43 @@ public class ListView extends AbsListView {
     }
 
     public ListView(Context context, AttributeSet attrs) {
-        this(context, attrs, com.android.internal.R.attr.listViewStyle);
+        this(context, attrs, R.attr.listViewStyle);
     }
 
     public ListView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
         TypedArray a = context.obtainStyledAttributes(attrs,
-                com.android.internal.R.styleable.ListView, defStyle, 0);
+                R.styleable.ListView, defStyle, 0);
 
         CharSequence[] entries = a.getTextArray(
-                com.android.internal.R.styleable.ListView_entries);
+                R.styleable.ListView_android_entries);
         if (entries != null) {
             setAdapter(new ArrayAdapter<CharSequence>(context,
-                    com.android.internal.R.layout.simple_list_item_1, entries));
+                    android.R.layout.simple_list_item_1, entries));
         }
 
-        final Drawable d = a.getDrawable(com.android.internal.R.styleable.ListView_divider);
+        final Drawable d = a.getDrawable(R.styleable.ListView_divider);
         if (d != null) {
             // If a divider is specified use its intrinsic height for divider height
             setDivider(d);
         }
         
         final Drawable osHeader = a.getDrawable(
-                com.android.internal.R.styleable.ListView_overScrollHeader);
+                R.styleable.ListView_overScrollHeader);
         if (osHeader != null) {
             setOverscrollHeader(osHeader);
         }
 
         final Drawable osFooter = a.getDrawable(
-                com.android.internal.R.styleable.ListView_overScrollFooter);
+                R.styleable.ListView_overScrollFooter);
         if (osFooter != null) {
             setOverscrollFooter(osFooter);
         }
 
         // Use the height specified, zero being the default
         final int dividerHeight = a.getDimensionPixelSize(
-                com.android.internal.R.styleable.ListView_dividerHeight, 0);
+                R.styleable.ListView_dividerHeight, 0);
         if (dividerHeight != 0) {
             setDividerHeight(dividerHeight);
         }
@@ -188,7 +186,7 @@ public class ListView extends AbsListView {
      *   an arrow event.
      */
     public int getMaxScrollAmount() {
-        return (int) (MAX_SCROLL_FACTOR * (mBottom - mTop));
+        return (int) (MAX_SCROLL_FACTOR * (getBottom() - getTop()));
     }
 
     /**
@@ -233,7 +231,7 @@ public class ListView extends AbsListView {
             }
 
             if (delta != 0) {
-                offsetChildrenTopAndBottom(-delta);
+                offsetChildrenTopAndBottomUnhide(-delta);
             }
         }
     }
@@ -401,7 +399,7 @@ public class ListView extends AbsListView {
     /**
      * Returns the adapter currently in use in this ListView. The returned adapter
      * might not be the same adapter passed to {@link #setAdapter(ListAdapter)} but
-     * might be a {@link WrapperListAdapter}.
+     * might be a {@link android.widget.WrapperListAdapter}.
      *
      * @return The adapter currently used to display data in this ListView.
      *
@@ -413,19 +411,9 @@ public class ListView extends AbsListView {
     }
 
     /**
-     * Sets up this AbsListView to use a remote views adapter which connects to a RemoteViewsService
-     * through the specified intent.
-     * @param intent the intent used to identify the RemoteViewsService for the adapter to connect to.
-     */
-    @android.view.RemotableViewMethod
-    public void setRemoteViewsAdapter(Intent intent) {
-        super.setRemoteViewsAdapter(intent);
-    }
-
-    /**
      * Sets the data behind this ListView.
      *
-     * The adapter passed to this method may be wrapped by a {@link WrapperListAdapter},
+     * The adapter passed to this method may be wrapped by a {@link android.widget.WrapperListAdapter},
      * depending on the ListView features currently in use. For instance, adding
      * headers and/or footers will cause the adapter to be wrapped.
      *
@@ -524,7 +512,7 @@ public class ListView extends AbsListView {
      * @return Whether the list needs to show the top fading edge
      */
     private boolean showingTopFadingEdge() {
-        final int listTop = mScrollY + mListPadding.top;
+        final int listTop = getScrollY() + mListPadding.top;
         return (mFirstPosition > 0) || (getChildAt(0).getTop() > listTop);
     }
 
@@ -536,7 +524,7 @@ public class ListView extends AbsListView {
         final int bottomOfBottomChild = getChildAt(childCount - 1).getBottom();
         final int lastVisiblePosition = mFirstPosition + childCount - 1;
 
-        final int listBottom = mScrollY + getHeight() - mListPadding.bottom;
+        final int listBottom = getScrollY() + getHeight() - mListPadding.bottom;
 
         return (lastVisiblePosition < mItemCount - 1)
                          || (bottomOfBottomChild < listBottom);
@@ -630,7 +618,7 @@ public class ListView extends AbsListView {
         final int count = getChildCount();
         if (down) {
             int paddingTop = 0;
-            if ((mGroupFlags & CLIP_TO_PADDING_MASK) == CLIP_TO_PADDING_MASK) {
+            if (mClipToPadding) {
                 paddingTop = getListPaddingTop();
             }
             final int startOffset = count > 0 ? getChildAt(count - 1).getBottom() + mDividerHeight :
@@ -639,7 +627,7 @@ public class ListView extends AbsListView {
             correctTooHigh(getChildCount());
         } else {
             int paddingBottom = 0;
-            if ((mGroupFlags & CLIP_TO_PADDING_MASK) == CLIP_TO_PADDING_MASK) {
+            if (mClipToPadding) {
                 paddingBottom = getListPaddingBottom();
             }
             final int startOffset = count > 0 ? getChildAt(0).getTop() - mDividerHeight :
@@ -663,8 +651,8 @@ public class ListView extends AbsListView {
     private View fillDown(int pos, int nextTop) {
         View selectedView = null;
 
-        int end = (mBottom - mTop);
-        if ((mGroupFlags & CLIP_TO_PADDING_MASK) == CLIP_TO_PADDING_MASK) {
+        int end = (getBottom() - getTop());
+        if (mClipToPadding) {
             end -= mListPadding.bottom;
         }
 
@@ -680,7 +668,8 @@ public class ListView extends AbsListView {
             pos++;
         }
 
-        setVisibleRangeHint(mFirstPosition, mFirstPosition + getChildCount() - 1);
+        // FIXME removed bacause we do not need RemoteViews (j.m.)
+//        setVisibleRangeHint(mFirstPosition, mFirstPosition + getChildCount() - 1);
         return selectedView;
     }
 
@@ -698,7 +687,7 @@ public class ListView extends AbsListView {
         View selectedView = null;
 
         int end = 0;
-        if ((mGroupFlags & CLIP_TO_PADDING_MASK) == CLIP_TO_PADDING_MASK) {
+        if (mClipToPadding) {
             end = mListPadding.top;
         }
 
@@ -714,7 +703,8 @@ public class ListView extends AbsListView {
         }
 
         mFirstPosition = pos + 1;
-        setVisibleRangeHint(mFirstPosition, mFirstPosition + getChildCount() - 1);
+        // FIXME removed bacause we do not need RemoteViews (j.m.)
+//        setVisibleRangeHint(mFirstPosition, mFirstPosition + getChildCount() - 1);
         return selectedView;
     }
 
@@ -894,7 +884,7 @@ public class ListView extends AbsListView {
      * scroll such that the indicated position is displayed.
      * @param position Scroll to this adapter position.
      */
-    @android.view.RemotableViewMethod
+    //@android.view.RemotableViewMethod
     public void smoothScrollToPosition(int position) {
         super.smoothScrollToPosition(position);
     }
@@ -904,7 +894,7 @@ public class ListView extends AbsListView {
      * scroll such that the indicated position is displayed.
      * @param offset The amount to offset from the adapter position to scroll to.
      */
-    @android.view.RemotableViewMethod
+    //@android.view.RemotableViewMethod
     public void smoothScrollByOffset(int offset) {
         super.smoothScrollByOffset(offset);
     }
@@ -1099,7 +1089,7 @@ public class ListView extends AbsListView {
             if (focusedChild != null) {
                 final int childPosition = mFirstPosition + indexOfChild(focusedChild);
                 final int childBottom = focusedChild.getBottom();
-                final int offset = Math.max(0, childBottom - (h - mPaddingTop));
+                final int offset = Math.max(0, childBottom - (h - getPaddingTop()));
                 final int top = focusedChild.getTop() - offset;
                 if (mFocusSelector == null) {
                     mFocusSelector = new FocusSelector();
@@ -1374,7 +1364,7 @@ public class ListView extends AbsListView {
             final int lastBottom = lastChild.getBottom();
 
             // This is bottom of our drawable area
-            final int end = (mBottom - mTop) - mListPadding.bottom;
+            final int end = (getBottom() - getTop()) - mListPadding.bottom;
 
             // This is how far the bottom edge of the last view is from the bottom of the
             // drawable area
@@ -1390,7 +1380,7 @@ public class ListView extends AbsListView {
                     bottomOffset = Math.min(bottomOffset, mListPadding.top - firstTop);
                 }
                 // Move everything down
-                offsetChildrenTopAndBottom(bottomOffset);
+                offsetChildrenTopAndBottomUnhide(bottomOffset);
                 if (mFirstPosition > 0) {
                     // Fill the gap that was opened above mFirstPosition with more rows, if
                     // possible
@@ -1425,7 +1415,7 @@ public class ListView extends AbsListView {
             final int start = mListPadding.top;
 
             // This is bottom of our drawable area
-            final int end = (mBottom - mTop) - mListPadding.bottom;
+            final int end = (getBottom() - getTop()) - mListPadding.bottom;
 
             // This is how far the top edge of the first view is from the top of the
             // drawable area
@@ -1443,7 +1433,7 @@ public class ListView extends AbsListView {
                         topOffset = Math.min(topOffset, lastBottom - end);
                     }
                     // Move everything up
-                    offsetChildrenTopAndBottom(-topOffset);
+                    offsetChildrenTopAndBottomUnhide(-topOffset);
                     if (lastPosition < mItemCount - 1) {
                         // Fill the gap that was opened below the last position with more rows, if
                         // possible
@@ -1479,7 +1469,7 @@ public class ListView extends AbsListView {
             }
 
             int childrenTop = mListPadding.top;
-            int childrenBottom = mBottom - mTop - mListPadding.bottom;
+            int childrenBottom = getBottom() - getTop() - mListPadding.bottom;
 
             int childCount = getChildCount();
             int index = 0;
@@ -1590,29 +1580,30 @@ public class ListView extends AbsListView {
                 requestFocus();
             }
 
-            // Remember which child, if any, had accessibility focus.
-            final ViewRootImpl viewRootImpl = getViewRootImpl();
-            if (viewRootImpl != null) {
-                final View accessFocusedView = viewRootImpl.getAccessibilityFocusedHost();
-                if (accessFocusedView != null) {
-                    final View accessFocusedChild = findAccessibilityFocusedChild(
-                            accessFocusedView);
-                    if (accessFocusedChild != null) {
-                        if (!dataChanged || isDirectChildHeaderOrFooter(accessFocusedChild)) {
-                            // If the views won't be changing, try to maintain
-                            // focus on the current view host and (if
-                            // applicable) its virtual view.
-                            accessibilityFocusLayoutRestoreView = accessFocusedView;
-                            accessibilityFocusLayoutRestoreNode = viewRootImpl
-                                    .getAccessibilityFocusedVirtualView();
-                        } else {
-                            // Otherwise, try to maintain focus at the same
-                            // position.
-                            accessibilityFocusPosition = getPositionForView(accessFocusedChild);
-                        }
-                    }
-                }
-            }
+            // TODO We can use those accessability methods, we just remove those (j.m.)
+//            //Remember which child, if any, had accessibility focus.
+//            final ViewRootImpl viewRootImpl = getViewRootImpl();
+//            if (viewRootImpl != null) {
+//                final View accessFocusedView = viewRootImpl.getAccessibilityFocusedHost();
+//                if (accessFocusedView != null) {
+//                    final View accessFocusedChild = findAccessibilityFocusedChild(
+//                            accessFocusedView);
+//                    if (accessFocusedChild != null) {
+//                        if (!dataChanged || isDirectChildHeaderOrFooter(accessFocusedChild)) {
+//                            // If the views won't be changing, try to maintain
+//                            // focus on the current view host and (if
+//                            // applicable) its virtual view.
+//                            accessibilityFocusLayoutRestoreView = accessFocusedView;
+//                            accessibilityFocusLayoutRestoreNode = viewRootImpl
+//                                    .getAccessibilityFocusedVirtualView();
+//                        } else {
+//                            // Otherwise, try to maintain focus at the same
+//                            // position.
+//                            accessibilityFocusPosition = getPositionForView(accessFocusedChild);
+//                        }
+//                    }
+//                }
+//            }
 
             // Clear out old views
             detachAllViewsFromParent();
@@ -1711,22 +1702,22 @@ public class ListView extends AbsListView {
                     focusLayoutRestoreView.requestFocus();
                 }
             }
-
-            // Attempt to restore accessibility focus.
-            if (accessibilityFocusLayoutRestoreNode != null) {
-                accessibilityFocusLayoutRestoreNode.performAction(
-                        AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
-            } else if (accessibilityFocusLayoutRestoreView != null) {
-                accessibilityFocusLayoutRestoreView.requestAccessibilityFocus();
-            } else if (accessibilityFocusPosition != INVALID_POSITION) {
-                // Bound the position within the visible children.
-                final int position = MathUtils.constrain(
-                        (accessibilityFocusPosition - mFirstPosition), 0, (getChildCount() - 1));
-                final View restoreView = getChildAt(position);
-                if (restoreView != null) {
-                    restoreView.requestAccessibilityFocus();
-                }
-            }
+            // TODO We can use those accessability methods, we just remove those (j.m.)
+//            // Attempt to restore accessibility focus.
+//            if (accessibilityFocusLayoutRestoreNode != null) {
+//                accessibilityFocusLayoutRestoreNode.performAction(
+//                        AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
+//            } else if (accessibilityFocusLayoutRestoreView != null) {
+//                accessibilityFocusLayoutRestoreView.requestAccessibilityFocus();
+//            } else if (accessibilityFocusPosition != INVALID_POSITION) {
+//                // Bound the position within the visible children.
+//                final int position = MathUtils.constrain(
+//                        (accessibilityFocusPosition - mFirstPosition), 0, (getChildCount() - 1));
+//                final View restoreView = getChildAt(position);
+//                if (restoreView != null) {
+//                    restoreView.requestAccessibilityFocus();
+//                }
+//            }
 
             // tell focus view we are done mucking with it, if it is still in
             // our view hierarchy.
@@ -2286,7 +2277,7 @@ public class ListView extends AbsListView {
             int position = lookForSelectablePosition(nextPage, down);
             if (position >= 0) {
                 mLayoutMode = LAYOUT_SPECIFIC;
-                mSpecificTop = mPaddingTop + getVerticalFadingEdgeLength();
+                mSpecificTop = getPaddingTop() + getVerticalFadingEdgeLength();
 
                 if (down && position > mItemCount - getChildCount()) {
                     mLayoutMode = LAYOUT_FORCE_BOTTOM;
@@ -2729,7 +2720,7 @@ public class ListView extends AbsListView {
         private int mAmountToScroll;
 
         /**
-         * How {@link android.widget.ListView#arrowScrollFocused} returns its values.
+         * How {@link ListView#arrowScrollFocused} returns its values.
          */
         void populate(int selectedPosition, int amountToScroll) {
             mSelectedPosition = selectedPosition;
@@ -2942,7 +2933,7 @@ public class ListView extends AbsListView {
         int distance = 0;
         descendant.getDrawingRect(mTempRect);
         offsetDescendantRectToMyCoords(descendant, mTempRect);
-        final int listBottom = mBottom - mTop - mListPadding.bottom;
+        final int listBottom = getBottom() - getTop() - mListPadding.bottom;
         if (mTempRect.bottom < mListPadding.top) {
             distance = mListPadding.top - mTempRect.bottom;
         } else if (mTempRect.top > listBottom) {
@@ -2959,7 +2950,7 @@ public class ListView extends AbsListView {
      * @param amount The amount (positive or negative) to scroll.
      */
     private void scrollListItemsBy(int amount) {
-        offsetChildrenTopAndBottom(amount);
+        offsetChildrenTopAndBottomUnhide(amount);
 
         final int listBottom = getHeight() - mListPadding.bottom;
         final int listTop = mListPadding.top;
@@ -2985,7 +2976,7 @@ public class ListView extends AbsListView {
             // than the fading edge, thereby leaving space at the end.  need
             // to shift back
             if (last.getBottom() < listBottom) {
-                offsetChildrenTopAndBottom(listBottom - last.getBottom());
+                offsetChildrenTopAndBottomUnhide(listBottom - last.getBottom());
             }
 
             // top views may be panned off screen
@@ -3012,7 +3003,7 @@ public class ListView extends AbsListView {
             // may have brought the very first child of the list in too far and
             // need to shift it back
             if (first.getTop() > listTop) {
-                offsetChildrenTopAndBottom(listTop - first.getTop());
+                offsetChildrenTopAndBottomUnhide(listTop - first.getTop());
             }
 
             int lastIndex = getChildCount() - 1;
@@ -3072,16 +3063,16 @@ public class ListView extends AbsListView {
     @Override
     public boolean isOpaque() {
         boolean retValue = (mCachingActive && mIsCacheColorOpaque && mDividerIsOpaque &&
-                hasOpaqueScrollbars()) || super.isOpaque();
+                hasOpaqueScrollbarsUnhide()) || super.isOpaque();
         if (retValue) {
             // only return true if the list items cover the entire area of the view
-            final int listTop = mListPadding != null ? mListPadding.top : mPaddingTop;
+            final int listTop = mListPadding != null ? mListPadding.top : getPaddingTop();
             View first = getChildAt(0);
             if (first == null || first.getTop() > listTop) {
                 return false;
             }
             final int listBottom = getHeight() -
-                    (mListPadding != null ? mListPadding.bottom : mPaddingBottom);
+                    (mListPadding != null ? mListPadding.bottom : getPaddingBottom());
             View last = getChildAt(getChildCount() - 1);
             if (last == null || last.getBottom() < listBottom) {
                 return false;
@@ -3154,8 +3145,8 @@ public class ListView extends AbsListView {
         if (drawDividers || drawOverscrollHeader || drawOverscrollFooter) {
             // Only modify the top and bottom in the loop, we set the left and right here
             final Rect bounds = mTempRect;
-            bounds.left = mPaddingLeft;
-            bounds.right = mRight - mLeft - mPaddingRight;
+            bounds.left = getPaddingLeft();
+            bounds.right = getRight() - getLeft() - getPaddingRight();
 
             final int count = getChildCount();
             final int headerCount = mHeaderViewInfos.size();
@@ -3180,17 +3171,20 @@ public class ListView extends AbsListView {
 
             int effectivePaddingTop = 0;
             int effectivePaddingBottom = 0;
-            if ((mGroupFlags & CLIP_TO_PADDING_MASK) == CLIP_TO_PADDING_MASK) {
+            if (mClipToPadding) {
                 effectivePaddingTop = mListPadding.top;
                 effectivePaddingBottom = mListPadding.bottom;
             }
 
-            final int listBottom = mBottom - mTop - effectivePaddingBottom + mScrollY;
+            final int viewBottom = getBottom();
+            final int viewTop = getTop();
+            final int scrollY = getScrollY();
+
+            final int listBottom = viewBottom - viewTop - effectivePaddingBottom + scrollY;
             if (!mStackFromBottom) {
                 int bottom = 0;
                 
                 // Draw top divider or header for overscroll
-                final int scrollY = mScrollY;
                 if (count > 0 && scrollY < 0) {
                     if (drawOverscrollHeader) {
                         bounds.bottom = 0;
@@ -3227,7 +3221,7 @@ public class ListView extends AbsListView {
                     }
                 }
 
-                final int overFooterBottom = mBottom + mScrollY;
+                final int overFooterBottom = viewBottom + scrollY;
                 if (drawOverscrollFooter && first + count == itemCount &&
                         overFooterBottom > bottom) {
                     bounds.top = bottom;
@@ -3237,7 +3231,6 @@ public class ListView extends AbsListView {
             } else {
                 int top;
 
-                final int scrollY = mScrollY;
 
                 if (count > 0 && drawOverscrollHeader) {
                     bounds.top = scrollY;
@@ -3274,7 +3267,7 @@ public class ListView extends AbsListView {
                 
                 if (count > 0 && scrollY > 0) {
                     if (drawOverscrollFooter) {
-                        final int absListBottom = mBottom;
+                        final int absListBottom = viewBottom;
                         bounds.top = absListBottom;
                         bounds.bottom = absListBottom + scrollY;
                         drawOverscrollFooter(canvas, overscrollFooter, bounds);
@@ -3294,7 +3287,9 @@ public class ListView extends AbsListView {
     @Override
     protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
         boolean more = super.drawChild(canvas, child, drawingTime);
-        if (mCachingActive && child.mCachingFailed) {
+        // TODO do not have access to cahing... try to ignore (j.m.)
+//        if (mCachingActive && child.mCachingFailed) {
+        if (mCachingActive) {
             mCachingActive = false;
         }
         return more;
@@ -3397,7 +3392,8 @@ public class ListView extends AbsListView {
      */
     public void setOverscrollHeader(Drawable header) {
         mOverScrollHeader = header;
-        if (mScrollY < 0) {
+        final int scrollY = getScrollY();
+        if (scrollY < 0) {
             invalidate();
         }
     }
@@ -3436,7 +3432,9 @@ public class ListView extends AbsListView {
         int closetChildIndex = -1;
         int closestChildTop = 0;
         if (adapter != null && gainFocus && previouslyFocusedRect != null) {
-            previouslyFocusedRect.offset(mScrollX, mScrollY);
+            final int scrollX = getScrollX();
+            final int scrollY = getScrollY();
+            previouslyFocusedRect.offset(scrollX, scrollY);
 
             // Don't cache the result of getChildCount or mFirstPosition here,
             // it could change in layoutChildren.
@@ -3498,145 +3496,145 @@ public class ListView extends AbsListView {
         }
     }
 
-    /* (non-Javadoc)
-     * @see android.view.View#findViewById(int)
-     * First look in our children, then in any header and footer views that may be scrolled off.
-     */
-    @Override
-    protected View findViewTraversal(int id) {
-        View v;
-        v = super.findViewTraversal(id);
-        if (v == null) {
-            v = findViewInHeadersOrFooters(mHeaderViewInfos, id);
-            if (v != null) {
-                return v;
-            }
-            v = findViewInHeadersOrFooters(mFooterViewInfos, id);
-            if (v != null) {
-                return v;
-            }
-        }
-        return v;
-    }
-
-    /* (non-Javadoc)
-     *
-     * Look in the passed in list of headers or footers for the view.
-     */
-    View findViewInHeadersOrFooters(ArrayList<FixedViewInfo> where, int id) {
-        if (where != null) {
-            int len = where.size();
-            View v;
-
-            for (int i = 0; i < len; i++) {
-                v = where.get(i).view;
-
-                if (!v.isRootNamespace()) {
-                    v = v.findViewById(id);
-
-                    if (v != null) {
-                        return v;
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see android.view.View#findViewWithTag(Object)
-     * First look in our children, then in any header and footer views that may be scrolled off.
-     */
-    @Override
-    protected View findViewWithTagTraversal(Object tag) {
-        View v;
-        v = super.findViewWithTagTraversal(tag);
-        if (v == null) {
-            v = findViewWithTagInHeadersOrFooters(mHeaderViewInfos, tag);
-            if (v != null) {
-                return v;
-            }
-
-            v = findViewWithTagInHeadersOrFooters(mFooterViewInfos, tag);
-            if (v != null) {
-                return v;
-            }
-        }
-        return v;
-    }
-
-    /* (non-Javadoc)
-     *
-     * Look in the passed in list of headers or footers for the view with the tag.
-     */
-    View findViewWithTagInHeadersOrFooters(ArrayList<FixedViewInfo> where, Object tag) {
-        if (where != null) {
-            int len = where.size();
-            View v;
-
-            for (int i = 0; i < len; i++) {
-                v = where.get(i).view;
-
-                if (!v.isRootNamespace()) {
-                    v = v.findViewWithTag(tag);
-
-                    if (v != null) {
-                        return v;
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * @hide
-     * @see android.view.View#findViewByPredicate(Predicate)
-     * First look in our children, then in any header and footer views that may be scrolled off.
-     */
-    @Override
-    protected View findViewByPredicateTraversal(Predicate<View> predicate, View childToSkip) {
-        View v;
-        v = super.findViewByPredicateTraversal(predicate, childToSkip);
-        if (v == null) {
-            v = findViewByPredicateInHeadersOrFooters(mHeaderViewInfos, predicate, childToSkip);
-            if (v != null) {
-                return v;
-            }
-
-            v = findViewByPredicateInHeadersOrFooters(mFooterViewInfos, predicate, childToSkip);
-            if (v != null) {
-                return v;
-            }
-        }
-        return v;
-    }
-
-    /* (non-Javadoc)
-     *
-     * Look in the passed in list of headers or footers for the first view that matches
-     * the predicate.
-     */
-    View findViewByPredicateInHeadersOrFooters(ArrayList<FixedViewInfo> where,
-            Predicate<View> predicate, View childToSkip) {
-        if (where != null) {
-            int len = where.size();
-            View v;
-
-            for (int i = 0; i < len; i++) {
-                v = where.get(i).view;
-
-                if (v != childToSkip && !v.isRootNamespace()) {
-                    v = v.findViewByPredicate(predicate);
-
-                    if (v != null) {
-                        return v;
-                    }
-                }
-            }
-        }
-        return null;
-    }
+    // TODO Probably we do not need this (j.m.)
+//    /* (non-Javadoc)
+//     * @see android.view.View#findViewById(int)
+//     * First look in our children, then in any header and footer views that may be scrolled off.
+//     */
+//    @Override
+//    protected View findViewTraversal(int id) {
+//        View v = super.findViewTraversal(id);
+//        if (v == null) {
+//            v = findViewInHeadersOrFooters(mHeaderViewInfos, id);
+//            if (v != null) {
+//                return v;
+//            }
+//            v = findViewInHeadersOrFooters(mFooterViewInfos, id);
+//            if (v != null) {
+//                return v;
+//            }
+//        }
+//        return v;
+//    }
+//
+//    /* (non-Javadoc)
+//     *
+//     * Look in the passed in list of headers or footers for the view.
+//     */
+//    View findViewInHeadersOrFooters(ArrayList<FixedViewInfo> where, int id) {
+//        if (where != null) {
+//            int len = where.size();
+//            View v;
+//
+//            for (int i = 0; i < len; i++) {
+//                v = where.get(i).view;
+//
+//                if (!v.isRootNamespace()) {
+//                    v = v.findViewById(id);
+//
+//                    if (v != null) {
+//                        return v;
+//                    }
+//                }
+//            }
+//        }
+//        return null;
+//    }
+//
+//    /* (non-Javadoc)
+//     * @see android.view.View#findViewWithTag(Object)
+//     * First look in our children, then in any header and footer views that may be scrolled off.
+//     */
+//    @Override
+//    protected View findViewWithTagTraversal(Object tag) {
+//        View v;
+//        v = super.findViewWithTagTraversal(tag);
+//        if (v == null) {
+//            v = findViewWithTagInHeadersOrFooters(mHeaderViewInfos, tag);
+//            if (v != null) {
+//                return v;
+//            }
+//
+//            v = findViewWithTagInHeadersOrFooters(mFooterViewInfos, tag);
+//            if (v != null) {
+//                return v;
+//            }
+//        }
+//        return v;
+//    }
+//
+//    /* (non-Javadoc)
+//     *
+//     * Look in the passed in list of headers or footers for the view with the tag.
+//     */
+//    View findViewWithTagInHeadersOrFooters(ArrayList<FixedViewInfo> where, Object tag) {
+//        if (where != null) {
+//            int len = where.size();
+//            View v;
+//
+//            for (int i = 0; i < len; i++) {
+//                v = where.get(i).view;
+//
+//                if (!v.isRootNamespace()) {
+//                    v = v.findViewWithTag(tag);
+//
+//                    if (v != null) {
+//                        return v;
+//                    }
+//                }
+//            }
+//        }
+//        return null;
+//    }
+//
+//    /**
+//     * @hide
+//     * @see android.view.View#findViewByPredicate(Predicate)
+//     * First look in our children, then in any header and footer views that may be scrolled off.
+//     */
+//    @Override
+//    protected View findViewByPredicateTraversal(Predicate<View> predicate, View childToSkip) {
+//        View v;
+//        v = super.findViewByPredicateTraversal(predicate, childToSkip);
+//        if (v == null) {
+//            v = findViewByPredicateInHeadersOrFooters(mHeaderViewInfos, predicate, childToSkip);
+//            if (v != null) {
+//                return v;
+//            }
+//
+//            v = findViewByPredicateInHeadersOrFooters(mFooterViewInfos, predicate, childToSkip);
+//            if (v != null) {
+//                return v;
+//            }
+//        }
+//        return v;
+//    }
+//
+//    /* (non-Javadoc)
+//     *
+//     * Look in the passed in list of headers or footers for the first view that matches
+//     * the predicate.
+//     */
+//    View findViewByPredicateInHeadersOrFooters(ArrayList<FixedViewInfo> where,
+//            Predicate<View> predicate, View childToSkip) {
+//        if (where != null) {
+//            int len = where.size();
+//            View v;
+//
+//            for (int i = 0; i < len; i++) {
+//                v = where.get(i).view;
+//
+//                if (v != childToSkip && !v.isRootNamespace()) {
+//                    v = v.findViewByPredicate(predicate);
+//
+//                    if (v != null) {
+//                        return v;
+//                    }
+//                }
+//            }
+//        }
+//        return null;
+//    }
 
     /**
      * Returns the set of checked items ids. The result is only valid if the
