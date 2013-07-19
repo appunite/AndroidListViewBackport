@@ -1,0 +1,93 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.5.+'
+    }
+}
+
+apply plugin: 'android-library'
+apply plugin: 'maven'
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    deployerJars
+}
+
+dependencies {
+    deployerJars "org.apache.maven.wagon:wagon-ssh:2.2"
+    compile "com.google.guava:guava:14.0.1"
+}
+
+version = "2.2"
+archivesBaseName = "listviewbackport"
+group = "com.appunite"
+
+android {
+    compileSdkVersion 17
+    buildToolsVersion "17"
+
+    defaultConfig {
+        minSdkVersion 7
+        targetSdkVersion 17
+    }
+}
+
+task createPomFile {
+    project.ext.pomFile = pom {
+        version = project.version
+        artifactId = project.archivesBaseName
+        groupId = project.group
+        project {
+            name 'AndroidListViewBackport'
+            description 'library allow easy download images to list.'
+            url 'http://appunite.com'
+            inceptionYear '2012'
+
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+
+            scm {
+                url "https://review.appunite.com/androidlistviewbackport"
+                connection "https://review.appunite.com/androidlistviewbackport.git"
+            }
+            developers {
+                developer {
+                    name 'Jacek Marchwicki <jacek.marchwicki@gmail.com>'
+                }
+            }
+        }
+    }
+}
+
+task install(type: Upload, dependsOn: createPomFile) {
+    description = "Upload archives to local repository"
+    configuration = configurations.archives
+    repositories.mavenInstaller {
+        pom = project.ext.pomFile
+    }
+}
+
+uploadArchives {
+    description = "Upload archives to maven repository"
+    dependsOn createPomFile
+    repositories {
+        mavenDeployer {
+            configuration = configurations.deployerJars
+            repository(url: "sftp://mavenrepo@192.158.30.128/repository/") {
+                authentication(userName: "mavenrepo")
+            }
+            pom = project.ext.pomFile
+        }
+    }
+}
+

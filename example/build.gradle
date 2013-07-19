@@ -1,0 +1,31 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.5.+'
+    }
+}
+apply plugin: 'android'
+
+repositories {
+    mavenCentral()
+    maven {
+        url "http://192.158.30.128/repository/"
+    }
+}
+
+dependencies {
+    compile project(":library")
+    //compile "com.appunite:auremoteimageloader:2.2"
+}
+
+android {
+    compileSdkVersion 17
+    buildToolsVersion "17"
+
+    defaultConfig {
+        minSdkVersion 7
+        targetSdkVersion 17
+    }
+}
