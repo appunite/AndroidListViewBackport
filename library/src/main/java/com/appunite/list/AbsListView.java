@@ -16,12 +16,14 @@
 
 package com.appunite.list;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Debug;
 import android.os.Handler;
@@ -36,7 +38,6 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.util.LongSparseArray;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 import android.util.StateSet;
@@ -71,7 +72,6 @@ import android.widget.EditText;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ListAdapter;
-import android.widget.OverScroller;
 import android.widget.PopupWindow;
 
 import java.util.ArrayList;
@@ -1112,15 +1112,13 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
     private void updateOnScreenCheckedViews() {
         final int firstPos = mFirstPosition;
         final int count = getChildCount();
-        final boolean useActivated = getContext().getApplicationInfo().targetSdkVersion
-                >= android.os.Build.VERSION_CODES.HONEYCOMB;
         for (int i = 0; i < count; i++) {
             final View child = getChildAt(i);
             final int position = firstPos + i;
 
             if (child instanceof Checkable) {
                 ((Checkable) child).setChecked(mCheckStates.get(position));
-            } else if (useActivated) {
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
                 child.setActivated(mCheckStates.get(position));
             }
         }
@@ -1384,6 +1382,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     @Override
     public boolean performAccessibilityAction(int action, Bundle arguments) {
         if (super.performAccessibilityAction(action, arguments)) {
@@ -2137,8 +2136,9 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         if (scrapView != null) {
             child = mAdapter.getView(position, scrapView, this);
 
-            if (child.getImportantForAccessibility() == IMPORTANT_FOR_ACCESSIBILITY_AUTO) {
-                child.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_YES);
+
+            if (ViewCompat.getImportantForAccessibility(child) == IMPORTANT_FOR_ACCESSIBILITY_AUTO) {
+                ViewCompat.setImportantForAccessibility(child, IMPORTANT_FOR_ACCESSIBILITY_YES);
             }
 
             if (child != scrapView) {
@@ -2153,8 +2153,8 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         } else {
             child = mAdapter.getView(position, null, this);
 
-            if (child.getImportantForAccessibility() == IMPORTANT_FOR_ACCESSIBILITY_AUTO) {
-                child.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_YES);
+            if (ViewCompat.getImportantForAccessibility(child) == IMPORTANT_FOR_ACCESSIBILITY_AUTO) {
+                ViewCompat.setImportantForAccessibility(child, IMPORTANT_FOR_ACCESSIBILITY_YES);
             }
 
             if (mCacheColorHint != 0) {
@@ -2510,7 +2510,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             if (shouldShowSelector()) {
                 mSelector.setState(getDrawableState());
             } else {
-                mSelector.setState(StateSet.NOTHING);
+                mSelector.setState(NOTHING_COMPAT);
             }
         }
     }
@@ -2560,6 +2560,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         return mSelector == dr || super.verifyDrawable(dr);
     }
 
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     @Override
     public void jumpDrawablesToCurrentState() {
         super.jumpDrawablesToCurrentState();
@@ -2661,7 +2662,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                     mPositionScroller.stop();
                 }
                 if (getScrollY() != 0) {
-                    setScrollY(0);
+                    scrollTo(getScrollX(), 0);
                     invalidateParentCachesUnhide();
                     finishGlows();
                     invalidate();
@@ -3180,7 +3181,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                 if (incrementalDeltaY != 0) {
                     // Coming back to 'real' list scrolling
                     if (getScrollY() != 0) {
-                        setScrollY(0);
+                        scrollTo(getScrollX(), 0);
                         invalidateParentIfNeededUnhide();
                     }
 
@@ -3227,8 +3228,8 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                     mPositionScroller.stop();
                 }
 
-                if (getScaleY() != 0) {
-                    setScrollY(0);
+                if (getScrollY() != 0) {
+                    scrollTo(getScrollX(), 0);
                     invalidateParentCachesUnhide();
                     finishGlows();
                     invalidate();
@@ -3629,13 +3630,14 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         final int scrollYOld = getScrollY();
         if (scrollYOld != scrollY) {
             onScrollChanged(scrollXOld, scrollY, scrollXOld, scrollYOld);
-            setScrollY(scrollY);
+            scrollTo(scrollXOld, scrollY);
             invalidateParentIfNeededUnhide();
 
             awakenScrollBars();
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
         if ((event.getSource() & InputDevice.SOURCE_CLASS_POINTER) != 0) {
@@ -4785,7 +4787,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
     }
 
     private void createScrollingCache() {
-        if (mScrollingCacheEnabled && !mCachingStarted && !isHardwareAccelerated()) {
+        if (mScrollingCacheEnabled && !mCachingStarted && !isHardwareAcceleratedCompat()) {
             setChildrenDrawnWithCacheEnabled(true);
             setChildrenDrawingCacheEnabled(true);
             mCachingStarted = mCachingActive = true;
@@ -4793,7 +4795,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
     }
 
     private void clearScrollingCache() {
-        if (!isHardwareAccelerated()) {
+        if (!isHardwareAcceleratedCompat()) {
             if (mClearScrollingCache == null) {
                 mClearScrollingCache = new Runnable() {
                     public void run() {
@@ -5863,7 +5865,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             // Don't reclaim header or footer views, or views that should be ignored
             if (lp != null && mRecycler.shouldRecycleViewType(lp.viewType)) {
                 views.add(child);
-                child.setAccessibilityDelegate(null);
+                ViewCompat.setAccessibilityDelegate(child, null);
                 if (listener != null) {
                     // Pretend they went through the scrap heap
                     listener.onMovedToScrapHeap(child);
@@ -6238,7 +6240,8 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                 return null;
             }
             final View result = mTransientStateViews.valueAt(index);
-            mTransientStateViews.removeAt(index);
+            final int key = mTransientStateViews.keyAt(index);
+            mTransientStateViews.remove(key);
             return result;
         }
 
@@ -6282,7 +6285,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             // Don't put header or footer views or views that should be ignored
             // into the scrap heap
             int viewType = lp.viewType;
-            final boolean scrapHasTransientState = scrap.hasTransientState();
+            final boolean scrapHasTransientState = ViewCompat.hasTransientState(scrap);
             if (!shouldRecycleViewType(viewType) || scrapHasTransientState) {
                 if (viewType != ITEM_VIEW_TYPE_HEADER_OR_FOOTER || scrapHasTransientState) {
                     if (mSkippedScrap == null) {
@@ -6307,7 +6310,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                 mScrapViews[viewType].add(scrap);
             }
 
-            scrap.setAccessibilityDelegate(null);
+            ViewCompat.setAccessibilityDelegate(scrap, null);
             if (mRecyclerListener != null) {
                 mRecyclerListener.onMovedToScrapHeap(scrap);
             }
@@ -6346,7 +6349,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
 
                     activeViews[i] = null;
 
-                    final boolean scrapHasTransientState = victim.hasTransientState();
+                    final boolean scrapHasTransientState = ViewCompat.hasTransientState(victim);
                     if (!shouldRecycleViewType(whichScrap) || scrapHasTransientState) {
                         // Do not move views that should be ignored
                         if (whichScrap != ITEM_VIEW_TYPE_HEADER_OR_FOOTER ||
@@ -6369,7 +6372,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                     lp.scrappedFromPosition = mFirstActivePosition + i;
                     scrapViews.add(victim);
 
-                    victim.setAccessibilityDelegate(null);
+                    ViewCompat.setAccessibilityDelegate(victim, null);
                     if (hasListener) {
                         mRecyclerListener.onMovedToScrapHeap(victim);
                     }
@@ -6400,8 +6403,9 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             if (mTransientStateViews != null) {
                 for (int i = 0; i < mTransientStateViews.size(); i++) {
                     final View v = mTransientStateViews.valueAt(i);
-                    if (!v.hasTransientState()) {
-                        mTransientStateViews.removeAt(i);
+                    if (!ViewCompat.hasTransientState(v)) {
+                        final int key = mTransientStateViews.keyAt(i);
+                        mTransientStateViews.remove(key);
                         i--;
                     }
                 }

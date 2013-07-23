@@ -24,6 +24,7 @@ import android.database.DataSetObserver;
 import android.os.Build;
 import android.os.Parcelable;
 import android.os.SystemClock;
+import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.util.TypedValue;
@@ -1372,6 +1373,18 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
         // TODO I actually do not know what to return... just return false (j.m.)
         return false;
     }
+
+    // Compat View method (j.m.)
+    public boolean isHardwareAcceleratedCompat() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            return isHardwareAccelerated();
+        } else {
+            return false;
+        }
+    }
+
+    // Compat StateSet method (j.m.)
+    public static final int[] NOTHING_COMPAT = new int[] { 0 };
 
 
 }
