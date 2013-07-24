@@ -41,7 +41,7 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 import android.util.StateSet;
-import android.view.ActionMode;
+import com.actionbarsherlock.view.ActionMode;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
@@ -989,7 +989,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                         "for CHOICE_MODE_MULTIPLE_MODAL but no choice mode callback was " +
                         "supplied. Call setMultiChoiceModeListener to set a callback.");
             }
-            mChoiceActionMode = startActionMode(mMultiChoiceModeCallback);
+            mChoiceActionMode = startActionModeCompat(mMultiChoiceModeCallback);
         }
 
         if (mChoiceMode == CHOICE_MODE_MULTIPLE || mChoiceMode == CHOICE_MODE_MULTIPLE_MODAL) {
@@ -1268,6 +1268,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         return mFastScrollEnabled;
     }
 
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     @Override
     public void setVerticalScrollbarPosition(int position) {
         super.setVerticalScrollbarPosition(position);
@@ -1371,13 +1372,17 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
     @Override
     public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
         super.onInitializeAccessibilityNodeInfo(info);
-        info.setClassName(AbsListView.class.getName());
-        if (isEnabled()) {
-            if (getFirstVisiblePosition() > 0) {
-                info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD);
-            }
-            if (getLastVisiblePosition() < getCount() - 1) {
-                info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            info.setClassName(AbsListView.class.getName());
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            if (isEnabled()) {
+                if (getFirstVisiblePosition() > 0) {
+                    info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD);
+                }
+                if (getLastVisiblePosition() < getCount() - 1) {
+                    info.addAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD);
+                }
             }
         }
     }
@@ -1746,7 +1751,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
 
         if (ss.inActionMode && mChoiceMode == CHOICE_MODE_MULTIPLE_MODAL &&
                 mMultiChoiceModeCallback != null) {
-            mChoiceActionMode = startActionMode(mMultiChoiceModeCallback);
+            mChoiceActionMode = startActionModeCompat(mMultiChoiceModeCallback);
         }
 
         requestLayout();
@@ -2602,7 +2607,11 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         final ViewTreeObserver treeObserver = getViewTreeObserver();
         treeObserver.removeOnTouchModeChangeListener(this);
         if (mTextFilterEnabled && mPopup != null) {
-            treeObserver.removeOnGlobalLayoutListener(this);
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                treeObserver.removeOnGlobalLayoutListener(this);
+            } else {
+                treeObserver.removeGlobalOnLayoutListener(this);
+            }
             mGlobalLayoutListenerAddedFilter = false;
         }
 
@@ -2806,7 +2815,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         // CHOICE_MODE_MULTIPLE_MODAL takes over long press.
         if (mChoiceMode == CHOICE_MODE_MULTIPLE_MODAL) {
             if (mChoiceActionMode == null &&
-                    (mChoiceActionMode = startActionMode(mMultiChoiceModeCallback)) != null) {
+                    (mChoiceActionMode = startActionModeCompat(mMultiChoiceModeCallback)) != null) {
                 setItemChecked(longPressPosition, true);
                 performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
             }
@@ -3964,7 +3973,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             mScroller.fling(0, initialY, 0, initialVelocity,
                     0, Integer.MAX_VALUE, 0, Integer.MAX_VALUE);
             mTouchMode = TOUCH_MODE_FLING;
-            postOnAnimation(this);
+            ViewCompat.postOnAnimation(AbsListView.this, this);
 
             if (PROFILE_FLINGING) {
                 if (!mFlingProfilingStarted) {
@@ -3983,7 +3992,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             if (mScroller.springBack(0, getScrollY(), 0, 0, 0, 0)) {
                 mTouchMode = TOUCH_MODE_OVERFLING;
                 invalidate();
-                postOnAnimation(this);
+                ViewCompat.postOnAnimation(AbsListView.this, this);
             } else {
                 mTouchMode = TOUCH_MODE_REST;
                 reportScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
@@ -3997,7 +4006,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                     Integer.MIN_VALUE, Integer.MAX_VALUE, 0, getHeight());
             mTouchMode = TOUCH_MODE_OVERFLING;
             invalidate();
-            postOnAnimation(this);
+            ViewCompat.postOnAnimation(AbsListView.this, this);
         }
 
         void edgeReached(int delta) {
@@ -4019,7 +4028,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                 }
             }
             invalidate();
-            postOnAnimation(this);
+            ViewCompat.postOnAnimation(AbsListView.this, this);
         }
 
         void startScroll(int distance, int duration, boolean linear) {
@@ -4029,7 +4038,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
 //            mScroller.setInterpolator(linear ? sLinearInterpolator : null);
             mScroller.startScroll(0, initialY, 0, distance, duration);
             mTouchMode = TOUCH_MODE_FLING;
-            postOnAnimation(this);
+            ViewCompat.postOnAnimation(AbsListView.this, this);
         }
 
         void endFling() {
@@ -4132,7 +4141,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                 if (more && !atEnd) {
                     if (atEdge) invalidate();
                     mLastFlingY = y;
-                    postOnAnimation(this);
+                    ViewCompat.postOnAnimation(AbsListView.this, this);
                 } else {
                     endFling();
 
@@ -4174,7 +4183,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                         }
                     } else {
                         invalidate();
-                        postOnAnimation(this);
+                        ViewCompat.postOnAnimation(AbsListView.this, this);
                     }
                 } else {
                     endFling();
@@ -4252,7 +4261,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             mBoundPos = INVALID_POSITION;
             mLastSeenPos = INVALID_POSITION;
 
-            postOnAnimation(this);
+            ViewCompat.postOnAnimation(AbsListView.this, this);
         }
 
         void start(final int position, final int boundPosition) {
@@ -4330,7 +4339,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             mBoundPos = boundPosition;
             mLastSeenPos = INVALID_POSITION;
 
-            postOnAnimation(this);
+            ViewCompat.postOnAnimation(AbsListView.this, this);
         }
 
         void startWithOffset(int position, int offset) {
@@ -4386,7 +4395,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                     duration : (int) (duration / screenTravelCount);
             mLastSeenPos = INVALID_POSITION;
 
-            postOnAnimation(this);
+            ViewCompat.postOnAnimation(AbsListView.this, this);
         }
 
         /**
@@ -4462,7 +4471,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
 
                 if (lastPos == mLastSeenPos) {
                     // No new views, let things keep going.
-                    postOnAnimation(this);
+                    ViewCompat.postOnAnimation(AbsListView.this, this);
                     return;
                 }
 
@@ -4478,7 +4487,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
 
                 mLastSeenPos = lastPos;
                 if (lastPos < mTargetPos) {
-                    postOnAnimation(this);
+                    ViewCompat.postOnAnimation(AbsListView.this, this);
                 }
                 break;
             }
@@ -4495,7 +4504,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
 
                 if (nextPos == mLastSeenPos) {
                     // No new views, let things keep going.
-                    postOnAnimation(this);
+                    ViewCompat.postOnAnimation(AbsListView.this, this);
                     return;
                 }
 
@@ -4509,7 +4518,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
 
                     mLastSeenPos = nextPos;
 
-                    postOnAnimation(this);
+                    ViewCompat.postOnAnimation(AbsListView.this, this);
                 } else  {
                     if (nextViewTop > extraScroll) {
                         smoothScrollBy(nextViewTop - extraScroll, mScrollDuration, true);
@@ -4521,7 +4530,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             case MOVE_UP_POS: {
                 if (firstPos == mLastSeenPos) {
                     // No new views, let things keep going.
-                    postOnAnimation(this);
+                    ViewCompat.postOnAnimation(AbsListView.this, this);
                     return;
                 }
 
@@ -4538,7 +4547,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                 mLastSeenPos = firstPos;
 
                 if (firstPos > mTargetPos) {
-                    postOnAnimation(this);
+                    ViewCompat.postOnAnimation(AbsListView.this, this);
                 }
                 break;
             }
@@ -4552,7 +4561,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
 
                 if (lastPos == mLastSeenPos) {
                     // No new views, let things keep going.
-                    postOnAnimation(this);
+                    ViewCompat.postOnAnimation(AbsListView.this, this);
                     return;
                 }
 
@@ -4564,7 +4573,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                 mLastSeenPos = lastPos;
                 if (lastPos > mBoundPos) {
                     smoothScrollBy(-(lastViewPixelsShowing - extraScroll), mScrollDuration, true);
-                    postOnAnimation(this);
+                    ViewCompat.postOnAnimation(AbsListView.this, this);
                 } else {
                     final int bottom = listHeight - extraScroll;
                     final int lastViewBottom = lastViewTop + lastViewHeight;
@@ -4578,7 +4587,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             case MOVE_OFFSET: {
                 if (mLastSeenPos == firstPos) {
                     // No new views, let things keep going.
-                    postOnAnimation(this);
+                    ViewCompat.postOnAnimation(AbsListView.this, this);
                     return;
                 }
 
@@ -4603,12 +4612,12 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                     final int distance = (int) (-getHeight() * modifier);
                     final int duration = (int) (mScrollDuration * modifier);
                     smoothScrollBy(distance, duration, true);
-                    postOnAnimation(this);
+                    ViewCompat.postOnAnimation(AbsListView.this, this);
                 } else if (position > lastPos) {
                     final int distance = (int) (getHeight() * modifier);
                     final int duration = (int) (mScrollDuration * modifier);
                     smoothScrollBy(distance, duration, true);
-                    postOnAnimation(this);
+                    ViewCompat.postOnAnimation(AbsListView.this, this);
                 } else {
                     // On-screen, just scroll.
                     final int targetTop = getChildAt(position - firstPos).getTop();
@@ -5930,7 +5939,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
      * {@link #onItemCheckedStateChanged(ActionMode, int, long, boolean)} events when the user
      * selects and deselects list items.
      */
-    public interface MultiChoiceModeListener extends ActionMode.Callback {
+    public interface MultiChoiceModeListener extends com.actionbarsherlock.view.ActionMode.Callback {
         /**
          * Called when an item is checked or unchecked during selection mode.
          *
@@ -5955,7 +5964,8 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             return mWrapped != null;
         }
 
-        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+        public boolean onCreateActionMode(com.actionbarsherlock.view.ActionMode mode,
+                                          com.actionbarsherlock.view.Menu menu) {
             if (mWrapped.onCreateActionMode(mode, menu)) {
                 // Initialize checked graphic state?
                 setLongClickable(false);
@@ -5964,11 +5974,13 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             return false;
         }
 
-        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+        public boolean onPrepareActionMode(com.actionbarsherlock.view.ActionMode mode,
+                                           com.actionbarsherlock.view.Menu menu) {
             return mWrapped.onPrepareActionMode(mode, menu);
         }
 
-        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+        public boolean onActionItemClicked(com.actionbarsherlock.view.ActionMode mode,
+                                           com.actionbarsherlock.view.MenuItem item) {
             return mWrapped.onActionItemClicked(mode, item);
         }
 
@@ -6479,4 +6491,5 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             return null;
         }
     }
+
 }

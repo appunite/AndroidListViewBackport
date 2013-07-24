@@ -28,8 +28,11 @@ import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.util.TypedValue;
+import android.view.ActionMode;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SoundEffectConstants;
 import android.view.View;
@@ -40,6 +43,10 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Adapter;
+
+import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.internal.view.menu.MenuWrapper;
+import com.actionbarsherlock.view.MenuInflater;
 
 /**
  * An AdapterView is a view whose children are determined by an {@link Adapter}.
@@ -1383,8 +1390,179 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    private class ActionModeCallbackWrapper implements android.view.ActionMode.Callback {
+        private AdapterView<?> mAdapterView;
+        private final com.actionbarsherlock.view.ActionMode.Callback mCallback;
+        private ActionModeWrapper mActionModeWrapper;
+
+        public ActionModeCallbackWrapper(AdapterView<?> adapterView,
+                                         com.actionbarsherlock.view.ActionMode.Callback callback) {
+            mAdapterView = adapterView;
+            mCallback = callback;
+        }
+
+        @Override
+        public boolean onCreateActionMode(android.view.ActionMode mode, android.view.Menu menu) {
+            //See ActionBarSherlockNative#startActionMode
+            mActionMode = mActionModeWrapper = new ActionModeWrapper(mAdapterView, mode);
+
+            return mCallback.onCreateActionMode(mActionMode, mActionMode.getMenu());
+        }
+
+        @Override
+        public boolean onPrepareActionMode(android.view.ActionMode mode, android.view.Menu menu) {
+            return mCallback.onPrepareActionMode(mActionMode, mActionMode.getMenu());
+        }
+
+        @Override
+        public boolean onActionItemClicked(android.view.ActionMode mode,
+                                           android.view.MenuItem item) {
+            return mCallback.onActionItemClicked(mActionMode,
+                    mActionModeWrapper.getMenu().findItem(item));
+        }
+
+        @Override
+        public void onDestroyActionMode(android.view.ActionMode mode) {
+            mCallback.onDestroyActionMode(mActionMode);
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    private static class ActionModeWrapper extends com.actionbarsherlock.view.ActionMode {
+        private final android.view.ActionMode mActionMode;
+        private MenuWrapper mMenu = null;
+        private final AdapterView<?> mAdapterView;
+
+        public ActionModeWrapper(AdapterView<?> adapterView, ActionMode mode) {
+            mAdapterView = adapterView;
+            mActionMode = mode;
+        }
+
+        @Override
+        public void setTitle(CharSequence title) {
+            mActionMode.setTitle(title);
+        }
+
+        @Override
+        public void setTitle(int resId) {
+            mActionMode.setTitle(resId);
+        }
+
+        @Override
+        public void setSubtitle(CharSequence subtitle) {
+            mActionMode.setSubtitle(subtitle);
+        }
+
+        @Override
+        public void setSubtitle(int resId) {
+            mActionMode.setSubtitle(resId);
+        }
+
+        @Override
+        public void setCustomView(View view) {
+            mActionMode.setCustomView(view);
+        }
+
+        @Override
+        public void invalidate() {
+            mActionMode.invalidate();
+        }
+
+        @Override
+        public void finish() {
+            mActionMode.finish();
+        }
+
+        @Override
+        public MenuWrapper getMenu() {
+            if (mMenu == null) {
+                mMenu = new MenuWrapper(mActionMode.getMenu());
+            }
+            return mMenu;
+        }
+
+        @Override
+        public CharSequence getTitle() {
+            return mActionMode.getTitle();
+        }
+
+        @Override
+        public CharSequence getSubtitle() {
+            return mActionMode.getSubtitle();
+        }
+
+        @Override
+        public View getCustomView() {
+            return mActionMode.getCustomView();
+        }
+
+        @Override
+        public MenuInflater getMenuInflater() {
+            return mAdapterView.getMenuInflater();
+        }
+
+        @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+        @Override
+        public void setTag(Object tag) {
+            mActionMode.setTag(tag);
+        }
+
+        @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+        @Override
+        public Object getTag() {
+            return mActionMode.getTag();
+        }
+    }
+
     // Compat StateSet method (j.m.)
     public static final int[] NOTHING_COMPAT = new int[] { 0 };
 
+    private com.actionbarsherlock.view.ActionMode.Callback mOldCallback = null;
+    private ActionMode.Callback mNewCallback = null;
+
+    /** Reference to our custom menu inflater which supports action items. */
+    protected MenuInflater mMenuInflater;
+
+
+    public MenuInflater getMenuInflater() {
+        final Context context = getContext();
+
+        // Make sure that action views can get an appropriate theme.
+        if (mMenuInflater == null) {
+             mMenuInflater = new MenuInflater(context);
+        }
+        return mMenuInflater;
+    }
+
+    private com.actionbarsherlock.view.ActionMode mActionMode;
+
+    protected com.actionbarsherlock.view.ActionMode startActionModeCompat(
+            final com.actionbarsherlock.view.ActionMode.Callback callback) {
+        if (callback == null) {
+            throw new IllegalArgumentException("Callback could not be null");
+        }
+        if (mActionMode != null) {
+            mActionMode.finish();
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            ActionMode.Callback newCallback;
+            if (mOldCallback == callback) {
+                newCallback = mNewCallback;
+            } else {
+                newCallback = mNewCallback = new ActionModeCallbackWrapper(this, callback);
+            }
+            startActionMode(newCallback);
+            return mActionMode;
+        }
+        final Context context = getContext();
+        if (context instanceof SherlockActivity) {
+            SherlockActivity activity = (SherlockActivity)context;
+            mActionMode = activity.startActionMode(callback);
+            return mActionMode;
+        }
+        return null;
+    }
 
 }

@@ -1,8 +1,6 @@
 package com.example.list;
 
-import android.app.Activity;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.ListAdapter;
 import android.widget.SimpleAdapter;
 
@@ -10,12 +8,11 @@ import com.appunite.list.ListView;
 import com.google.common.collect.Maps;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import com.actionbarsherlock.app.SherlockActivity;
 
-public class MainActivity extends Activity {
+public class MainActivity extends SherlockActivity {
 
     private static final String PROJECTION_NAME = "name";
 
@@ -26,10 +23,9 @@ public class MainActivity extends Activity {
 
         final ListView listView = (ListView) findViewById(android.R.id.list);
         List<HashMap<String, String>> data = new ArrayList<HashMap<String, String>>();
-        final List<String> strings = Arrays.asList("dog", "cut", "cow", "elephant");
-        for (String string : strings) {
+        for (int i = 0; i < 100; ++i) {
             final HashMap<String,String> map = Maps.newHashMap();
-            map.put(PROJECTION_NAME, string);
+            map.put(PROJECTION_NAME, String.format("Item: %d", i));
             data.add(map);
         }
         ListAdapter adapter = new SimpleAdapter(this,
@@ -38,5 +34,6 @@ public class MainActivity extends Activity {
                 new String[] {PROJECTION_NAME},
                 new int[] {android.R.id.text1});
         listView.setAdapter(adapter);
+        listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
     }
 }

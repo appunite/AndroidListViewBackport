@@ -22,7 +22,7 @@ configurations {
 dependencies {
     deployerJars "org.apache.maven.wagon:wagon-ssh:2.2"
     compile "com.google.guava:guava:14.0.1"
-    compile "com.appunite:android-support-v4:[7,)"
+    compile "com.appunite:actionbarsherlock:4.1"
 }
 
 version = "1.0"

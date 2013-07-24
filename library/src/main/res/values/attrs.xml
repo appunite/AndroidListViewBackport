@@ -128,7 +128,7 @@
              this is simpler than populating the ListView programmatically. -->
         <attr name="android:entries" />
         <!-- Drawable or color to draw between list items. -->
-        <attr name="divider" format="reference|color" />
+        <attr name="divider" />
         <!-- Height of the divider. Will use the intrinsic height of the divider if this
              is not specified. -->
         <attr name="dividerHeight" format="dimension" />
