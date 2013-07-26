@@ -96,7 +96,7 @@ class FastScroller {
     private RectF mOverlayPos;
     private int mOverlaySize;
 
-    AbsListView mList;
+    SuperListView mList;
     boolean mScrollCompleted;
     private int mVisibleItem;
     private Paint mPaint;
@@ -156,7 +156,7 @@ class FastScroller {
         }
     };
 
-    public FastScroller(Context context, AbsListView listView) {
+    public FastScroller(Context context, SuperListView listView) {
         mList = listView;
         init(context);
     }
@@ -443,7 +443,7 @@ class FastScroller {
         }
     }
 
-    void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, 
+    void onScroll(int firstVisibleItem, int visibleItemCount,
             int totalItemCount) {
         // Are there enough pages to require fast scroll? Recompute only if total count changes
         if (mItemCount != totalItemCount && visibleItemCount > 0) {

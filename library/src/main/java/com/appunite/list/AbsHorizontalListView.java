@@ -40,16 +40,12 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
-import android.util.StateSet;
-import com.actionbarsherlock.view.ActionMode;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -74,6 +70,8 @@ import android.widget.Filterable;
 import android.widget.ListAdapter;
 import android.widget.PopupWindow;
 
+import com.actionbarsherlock.view.ActionMode;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,7 +91,7 @@ import java.util.List;
  * @attr ref android.R.styleable#AbsListView_smoothScrollbar
  * @attr ref android.R.styleable#AbsListView_choiceMode
  */
-public abstract class AbsListView extends SuperListView implements TextWatcher,
+public abstract class AbsHorizontalListView extends SuperListView implements TextWatcher,
         ViewTreeObserver.OnGlobalLayoutListener, Filter.FilterListener,
         ViewTreeObserver.OnTouchModeChangeListener {
 
@@ -535,7 +533,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
     /**
      * Acts upon click
      */
-    private AbsListView.PerformClick mPerformClick;
+    private AbsHorizontalListView.PerformClick mPerformClick;
 
     /**
      * Delayed action for touch mode.
@@ -705,14 +703,14 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
          * Callback method to be invoked while the list view or grid view is being scrolled. If the
          * view is being scrolled, this method will be called before the next frame of the scroll is
          * rendered. In particular, it will be called before any calls to
-         * {@link android.widget.Adapter#getView(int, View, ViewGroup)}.
+         * {@link android.widget.Adapter#getView(int, android.view.View, android.view.ViewGroup)}.
          *
          * @param view The view whose scroll state is being reported
          *
          * @param scrollState The current scroll state. One of {@link #SCROLL_STATE_IDLE},
          * {@link #SCROLL_STATE_TOUCH_SCROLL} or {@link #SCROLL_STATE_IDLE}.
          */
-        public void onScrollStateChanged(AbsListView view, int scrollState);
+        public void onScrollStateChanged(AbsHorizontalListView view, int scrollState);
 
         /**
          * Callback method to be invoked when the list or grid has been scrolled. This will be
@@ -723,8 +721,8 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
          * @param visibleItemCount the number of visible cells
          * @param totalItemCount the number of items in the list adaptor
          */
-        public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
-                int totalItemCount);
+        public void onScroll(AbsHorizontalListView view, int firstVisibleItem, int visibleItemCount,
+                             int totalItemCount);
     }
 
     /**
@@ -743,7 +741,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
         public void adjustListItemSelectionBounds(Rect bounds);
     }
 
-    public AbsListView(Context context) {
+    public AbsHorizontalListView(Context context) {
         super(context);
         initAbsListView();
 
@@ -753,11 +751,11 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
         a.recycle();
     }
 
-    public AbsListView(Context context, AttributeSet attrs) {
+    public AbsHorizontalListView(Context context, AttributeSet attrs) {
         this(context, attrs, R.attr.absListViewStyle);
     }
 
-    public AbsListView(Context context, AttributeSet attrs, int defStyle) {
+    public AbsHorizontalListView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         initAbsListView();
 
@@ -929,7 +927,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
     /**
      * Returns the set of checked items ids. The result is only valid if the
      * choice mode has not been set to {@link #CHOICE_MODE_NONE} and the adapter
-     * has stable IDs. ({@link ListAdapter#hasStableIds()} == {@code true})
+     * has stable IDs. ({@link android.widget.ListAdapter#hasStableIds()} == {@code true})
      *
      * @return A new array which contains the id of each checked item in the
      *         list.
@@ -1160,7 +1158,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
 
     /**
      * Set a {@link MultiChoiceModeListener} that will manage the lifecycle of the
-     * selection {@link ActionMode}. Only used when the choice mode is set to
+     * selection {@link com.actionbarsherlock.view.ActionMode}. Only used when the choice mode is set to
      * {@link #CHOICE_MODE_MULTIPLE_MODAL}.
      *
      * @param listener Listener that will manage the selection mode
@@ -1361,14 +1359,14 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
     @Override
     public void onInitializeAccessibilityEvent(AccessibilityEvent event) {
         super.onInitializeAccessibilityEvent(event);
-        event.setClassName(AbsListView.class.getName());
+        event.setClassName(AbsHorizontalListView.class.getName());
     }
 
     @Override
     public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
         super.onInitializeAccessibilityNodeInfo(info);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            info.setClassName(AbsListView.class.getName());
+            info.setClassName(AbsHorizontalListView.class.getName());
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             if (isEnabled()) {
@@ -1414,7 +1412,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
      * @return true if the scrolling cache is enabled, false otherwise
      *
      * @see #setScrollingCacheEnabled(boolean)
-     * @see View#setDrawingCacheEnabled(boolean)
+     * @see android.view.View#setDrawingCacheEnabled(boolean)
      */
     @ViewDebug.ExportedProperty
     public boolean isScrollingCacheEnabled() {
@@ -1432,7 +1430,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
      * @param enabled true to enable the scroll cache, false otherwise
      *
      * @see #isScrollingCacheEnabled()
-     * @see View#setDrawingCacheEnabled(boolean)
+     * @see android.view.View#setDrawingCacheEnabled(boolean)
      */
     public void setScrollingCacheEnabled(boolean enabled) {
         if (mScrollingCacheEnabled && !enabled) {
@@ -1445,11 +1443,11 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
      * Enables or disables the type filter window. If enabled, typing when
      * this view has focus will filter the children to match the users input.
      * Note that the {@link android.widget.Adapter} used by this view must implement the
-     * {@link Filterable} interface.
+     * {@link android.widget.Filterable} interface.
      *
      * @param textFilterEnabled true to enable type filtering, false otherwise
      *
-     * @see Filterable
+     * @see android.widget.Filterable
      */
     public void setTextFilterEnabled(boolean textFilterEnabled) {
         mTextFilterEnabled = textFilterEnabled;
@@ -1461,7 +1459,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
      * @return true if type filtering is enabled, false otherwise
      *
      * @see #setTextFilterEnabled(boolean)
-     * @see Filterable
+     * @see android.widget.Filterable
      */
     @ViewDebug.ExportedProperty
     public boolean isTextFilterEnabled() {
@@ -1533,7 +1531,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
         LongSparseArray<Integer> checkIdState;
 
         /**
-         * Constructor called from {@link AbsListView#onSaveInstanceState()}
+         * Constructor called from {@link com.appunite.list.AbsHorizontalListView#onSaveInstanceState()}
          */
         SavedState(Parcelable superState) {
             super(superState);
@@ -1597,8 +1595,8 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
                     + " checkState=" + checkState + "}";
         }
 
-        public static final Parcelable.Creator<SavedState> CREATOR
-                = new Parcelable.Creator<SavedState>() {
+        public static final Creator<SavedState> CREATOR
+                = new Creator<SavedState>() {
             public SavedState createFromParcel(Parcel in) {
                 return new SavedState(in);
             }
@@ -1999,7 +1997,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
             }
             mRecycler.markChildrenDirty();
         }
-        
+
         if (mFastScroller != null && mItemCount != mOldItemCount) {
             mFastScroller.onItemCountChanged(mOldItemCount, mItemCount);
         }
@@ -2817,12 +2815,12 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
 
         boolean handled = false;
         if (mOnItemLongClickListener != null) {
-            handled = mOnItemLongClickListener.onItemLongClick(AbsListView.this, child,
+            handled = mOnItemLongClickListener.onItemLongClick(AbsHorizontalListView.this, child,
                     longPressPosition, longPressId);
         }
         if (!handled) {
             mContextMenuInfo = createContextMenuInfo(child, longPressPosition, longPressId);
-            handled = super.showContextMenuForChild(AbsListView.this);
+            handled = super.showContextMenuForChild(AbsHorizontalListView.this);
         }
         if (handled) {
             performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
@@ -2845,7 +2843,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
             View child = getChildAt(position - mFirstPosition);
             if (child != null) {
                 mContextMenuInfo = createContextMenuInfo(child, position, id);
-                return super.showContextMenuForChild(AbsListView.this);
+                return super.showContextMenuForChild(AbsHorizontalListView.this);
             }
         }
         return super.showContextMenuUnhide(x, y, metaState);
@@ -2859,7 +2857,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
             boolean handled = false;
 
             if (mOnItemLongClickListener != null) {
-                handled = mOnItemLongClickListener.onItemLongClick(AbsListView.this, originalView,
+                handled = mOnItemLongClickListener.onItemLongClick(AbsHorizontalListView.this, originalView,
                         longPressPosition, longPressId);
             }
             if (!handled) {
@@ -3391,7 +3389,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
                         mPerformClick = new PerformClick();
                     }
 
-                    final AbsListView.PerformClick performClick = mPerformClick;
+                    final AbsHorizontalListView.PerformClick performClick = mPerformClick;
                     performClick.mClickMotionPosition = motionPosition;
                     performClick.rememberWindowAttachCount();
 
@@ -3967,7 +3965,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
             mScroller.fling(0, initialY, 0, initialVelocity,
                     0, Integer.MAX_VALUE, 0, Integer.MAX_VALUE);
             mTouchMode = TOUCH_MODE_FLING;
-            ViewCompat.postOnAnimation(AbsListView.this, this);
+            ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
 
             if (PROFILE_FLINGING) {
                 if (!mFlingProfilingStarted) {
@@ -3986,7 +3984,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
             if (mScroller.springBack(0, getScrollY(), 0, 0, 0, 0)) {
                 mTouchMode = TOUCH_MODE_OVERFLING;
                 invalidate();
-                ViewCompat.postOnAnimation(AbsListView.this, this);
+                ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
             } else {
                 mTouchMode = TOUCH_MODE_REST;
                 reportScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
@@ -4000,7 +3998,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
                     Integer.MIN_VALUE, Integer.MAX_VALUE, 0, getHeight());
             mTouchMode = TOUCH_MODE_OVERFLING;
             invalidate();
-            ViewCompat.postOnAnimation(AbsListView.this, this);
+            ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
         }
 
         void edgeReached(int delta) {
@@ -4022,7 +4020,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
                 }
             }
             invalidate();
-            ViewCompat.postOnAnimation(AbsListView.this, this);
+            ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
         }
 
         void startScroll(int distance, int duration, boolean linear) {
@@ -4032,7 +4030,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
 //            mScroller.setInterpolator(linear ? sLinearInterpolator : null);
             mScroller.startScroll(0, initialY, 0, distance, duration);
             mTouchMode = TOUCH_MODE_FLING;
-            ViewCompat.postOnAnimation(AbsListView.this, this);
+            ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
         }
 
         void endFling() {
@@ -4135,7 +4133,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
                 if (more && !atEnd) {
                     if (atEdge) invalidate();
                     mLastFlingY = y;
-                    ViewCompat.postOnAnimation(AbsListView.this, this);
+                    ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
                 } else {
                     endFling();
 
@@ -4177,7 +4175,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
                         }
                     } else {
                         invalidate();
-                        ViewCompat.postOnAnimation(AbsListView.this, this);
+                        ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
                     }
                 } else {
                     endFling();
@@ -4255,7 +4253,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
             mBoundPos = INVALID_POSITION;
             mLastSeenPos = INVALID_POSITION;
 
-            ViewCompat.postOnAnimation(AbsListView.this, this);
+            ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
         }
 
         void start(final int position, final int boundPosition) {
@@ -4333,7 +4331,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
             mBoundPos = boundPosition;
             mLastSeenPos = INVALID_POSITION;
 
-            ViewCompat.postOnAnimation(AbsListView.this, this);
+            ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
         }
 
         void startWithOffset(int position, int offset) {
@@ -4389,7 +4387,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
                     duration : (int) (duration / screenTravelCount);
             mLastSeenPos = INVALID_POSITION;
 
-            ViewCompat.postOnAnimation(AbsListView.this, this);
+            ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
         }
 
         /**
@@ -4465,7 +4463,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
 
                 if (lastPos == mLastSeenPos) {
                     // No new views, let things keep going.
-                    ViewCompat.postOnAnimation(AbsListView.this, this);
+                    ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
                     return;
                 }
 
@@ -4481,7 +4479,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
 
                 mLastSeenPos = lastPos;
                 if (lastPos < mTargetPos) {
-                    ViewCompat.postOnAnimation(AbsListView.this, this);
+                    ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
                 }
                 break;
             }
@@ -4498,7 +4496,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
 
                 if (nextPos == mLastSeenPos) {
                     // No new views, let things keep going.
-                    ViewCompat.postOnAnimation(AbsListView.this, this);
+                    ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
                     return;
                 }
 
@@ -4512,7 +4510,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
 
                     mLastSeenPos = nextPos;
 
-                    ViewCompat.postOnAnimation(AbsListView.this, this);
+                    ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
                 } else  {
                     if (nextViewTop > extraScroll) {
                         smoothScrollBy(nextViewTop - extraScroll, mScrollDuration, true);
@@ -4524,7 +4522,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
             case MOVE_UP_POS: {
                 if (firstPos == mLastSeenPos) {
                     // No new views, let things keep going.
-                    ViewCompat.postOnAnimation(AbsListView.this, this);
+                    ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
                     return;
                 }
 
@@ -4541,7 +4539,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
                 mLastSeenPos = firstPos;
 
                 if (firstPos > mTargetPos) {
-                    ViewCompat.postOnAnimation(AbsListView.this, this);
+                    ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
                 }
                 break;
             }
@@ -4555,7 +4553,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
 
                 if (lastPos == mLastSeenPos) {
                     // No new views, let things keep going.
-                    ViewCompat.postOnAnimation(AbsListView.this, this);
+                    ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
                     return;
                 }
 
@@ -4567,7 +4565,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
                 mLastSeenPos = lastPos;
                 if (lastPos > mBoundPos) {
                     smoothScrollBy(-(lastViewPixelsShowing - extraScroll), mScrollDuration, true);
-                    ViewCompat.postOnAnimation(AbsListView.this, this);
+                    ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
                 } else {
                     final int bottom = listHeight - extraScroll;
                     final int lastViewBottom = lastViewTop + lastViewHeight;
@@ -4581,7 +4579,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
             case MOVE_OFFSET: {
                 if (mLastSeenPos == firstPos) {
                     // No new views, let things keep going.
-                    ViewCompat.postOnAnimation(AbsListView.this, this);
+                    ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
                     return;
                 }
 
@@ -4606,12 +4604,12 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
                     final int distance = (int) (-getHeight() * modifier);
                     final int duration = (int) (mScrollDuration * modifier);
                     smoothScrollBy(distance, duration, true);
-                    ViewCompat.postOnAnimation(AbsListView.this, this);
+                    ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
                 } else if (position > lastPos) {
                     final int distance = (int) (getHeight() * modifier);
                     final int duration = (int) (mScrollDuration * modifier);
                     smoothScrollBy(distance, duration, true);
-                    ViewCompat.postOnAnimation(AbsListView.this, this);
+                    ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
                 } else {
                     // On-screen, just scroll.
                     final int targetTop = getChildAt(position - firstPos).getTop();
@@ -4631,7 +4629,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
 
     /**
      * The amount of friction applied to flings. The default value
-     * is {@link ViewConfiguration#getScrollFriction}.
+     * is {@link android.view.ViewConfiguration#getScrollFriction}.
      *
      * @return A scalar dimensionless value representing the coefficient of
      *         friction.
@@ -5078,7 +5076,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
         requestLayout();
         invalidate();
     }
-    
+
     /**
      * If there is a selection returns false.
      * Otherwise resurrects the selection and returns true if resurrected.
@@ -5770,7 +5768,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
 
     @Override
     protected ViewGroup.LayoutParams generateDefaultLayoutParams() {
-        return new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+        return new AbsHorizontalListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, 0);
     }
 
@@ -5781,12 +5779,12 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
 
     @Override
     public LayoutParams generateLayoutParams(AttributeSet attrs) {
-        return new AbsListView.LayoutParams(getContext(), attrs);
+        return new AbsHorizontalListView.LayoutParams(getContext(), attrs);
     }
 
     @Override
     protected boolean checkLayoutParams(ViewGroup.LayoutParams p) {
-        return p instanceof AbsListView.LayoutParams;
+        return p instanceof AbsHorizontalListView.LayoutParams;
     }
 
     /**
@@ -5824,7 +5822,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
      *
      * Zero means that what's behind this object is translucent (non solid) or is not made of a
      * single color. This hint will not affect any existing background drawable set on this view (
-     * typically set via {@link #setBackgroundDrawable(Drawable)}).
+     * typically set via {@link #setBackgroundDrawable(android.graphics.drawable.Drawable)}).
      *
      * @param color The background color
      */
@@ -5864,7 +5862,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
         // Reclaim views on screen
         for (int i = 0; i < childCount; i++) {
             View child = getChildAt(i);
-            AbsListView.LayoutParams lp = (AbsListView.LayoutParams) child.getLayoutParams();
+            AbsHorizontalListView.LayoutParams lp = (AbsHorizontalListView.LayoutParams) child.getLayoutParams();
             // Don't reclaim header or footer views, or views that should be ignored
             if (lp != null && mRecycler.shouldRecycleViewType(lp.viewType)) {
                 views.add(child);
@@ -5902,8 +5900,8 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
      * @param listener The recycler listener to be notified of views set aside
      *        in the recycler.
      *
-     * @see AbsListView.RecycleBin
-     * @see AbsListView.RecyclerListener
+     * @see com.appunite.list.AbsHorizontalListView.RecycleBin
+     * @see com.appunite.list.AbsHorizontalListView.RecyclerListener
      */
     public void setRecyclerListener(RecyclerListener listener) {
         mRecycler.mRecyclerListener = listener;
@@ -5928,23 +5926,23 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
     }
 
     /**
-     * A MultiChoiceModeListener receives events for {@link AbsListView#CHOICE_MODE_MULTIPLE_MODAL}.
-     * It acts as the {@link ActionMode.Callback} for the selection mode and also receives
-     * {@link #onItemCheckedStateChanged(ActionMode, int, long, boolean)} events when the user
+     * A MultiChoiceModeListener receives events for {@link com.appunite.list.AbsHorizontalListView#CHOICE_MODE_MULTIPLE_MODAL}.
+     * It acts as the {@link com.actionbarsherlock.view.ActionMode.Callback} for the selection mode and also receives
+     * {@link #onItemCheckedStateChanged(com.actionbarsherlock.view.ActionMode, int, long, boolean)} events when the user
      * selects and deselects list items.
      */
-    public interface MultiChoiceModeListener extends com.actionbarsherlock.view.ActionMode.Callback {
+    public interface MultiChoiceModeListener extends ActionMode.Callback {
         /**
          * Called when an item is checked or unchecked during selection mode.
          *
-         * @param mode The {@link ActionMode} providing the selection mode
+         * @param mode The {@link com.actionbarsherlock.view.ActionMode} providing the selection mode
          * @param position Adapter position of the item that was checked or unchecked
          * @param id Adapter ID of the item that was checked or unchecked
          * @param checked <code>true</code> if the item is now checked, <code>false</code>
          *                if the item is now unchecked.
          */
         public void onItemCheckedStateChanged(ActionMode mode,
-                int position, long id, boolean checked);
+                                              int position, long id, boolean checked);
     }
 
     class MultiChoiceModeWrapper implements MultiChoiceModeListener {
@@ -5958,7 +5956,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
             return mWrapped != null;
         }
 
-        public boolean onCreateActionMode(com.actionbarsherlock.view.ActionMode mode,
+        public boolean onCreateActionMode(ActionMode mode,
                                           com.actionbarsherlock.view.Menu menu) {
             if (mWrapped.onCreateActionMode(mode, menu)) {
                 // Initialize checked graphic state?
@@ -5968,12 +5966,12 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
             return false;
         }
 
-        public boolean onPrepareActionMode(com.actionbarsherlock.view.ActionMode mode,
+        public boolean onPrepareActionMode(ActionMode mode,
                                            com.actionbarsherlock.view.Menu menu) {
             return mWrapped.onPrepareActionMode(mode, menu);
         }
 
-        public boolean onActionItemClicked(com.actionbarsherlock.view.ActionMode mode,
+        public boolean onActionItemClicked(ActionMode mode,
                                            com.actionbarsherlock.view.MenuItem item) {
             return mWrapped.onActionItemClicked(mode, item);
         }
@@ -6072,8 +6070,8 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
      * inside the RecycleBin's scrap heap. This listener is used to free resources
      * associated to Views placed in the RecycleBin.
      *
-     * @see AbsListView.RecycleBin
-     * @see AbsListView#setRecyclerListener(AbsListView.RecyclerListener)
+     * @see com.appunite.list.AbsHorizontalListView.RecycleBin
+     * @see com.appunite.list.AbsHorizontalListView#setRecyclerListener(com.appunite.list.AbsHorizontalListView.RecyclerListener)
      */
     public static interface RecyclerListener {
         /**
@@ -6209,7 +6207,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
             final View[] activeViews = mActiveViews;
             for (int i = 0; i < childCount; i++) {
                 View child = getChildAt(i);
-                AbsListView.LayoutParams lp = (AbsListView.LayoutParams) child.getLayoutParams();
+                AbsHorizontalListView.LayoutParams lp = (AbsHorizontalListView.LayoutParams) child.getLayoutParams();
                 // Don't put header or footer views into the scrap heap
                 if (lp != null && lp.viewType != ITEM_VIEW_TYPE_HEADER_OR_FOOTER) {
                     // Note:  We do place AdapterView.ITEM_VIEW_TYPE_IGNORE in active views.
@@ -6281,7 +6279,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
          * @param scrap The view to add
          */
         void addScrapView(View scrap, int position) {
-            AbsListView.LayoutParams lp = (AbsListView.LayoutParams) scrap.getLayoutParams();
+            AbsHorizontalListView.LayoutParams lp = (AbsHorizontalListView.LayoutParams) scrap.getLayoutParams();
             if (lp == null) {
                 return;
             }
@@ -6349,8 +6347,8 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
             for (int i = count - 1; i >= 0; i--) {
                 final View victim = activeViews[i];
                 if (victim != null) {
-                    final AbsListView.LayoutParams lp
-                            = (AbsListView.LayoutParams) victim.getLayoutParams();
+                    final AbsHorizontalListView.LayoutParams lp
+                            = (AbsHorizontalListView.LayoutParams) victim.getLayoutParams();
                     int whichScrap = lp.viewType;
 
                     activeViews[i] = null;
@@ -6474,7 +6472,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
             // See if we still have a view for this position.
             for (int i=0; i<size; i++) {
                 View view = scrapViews.get(i);
-                if (((AbsListView.LayoutParams)view.getLayoutParams())
+                if (((AbsHorizontalListView.LayoutParams)view.getLayoutParams())
                         .scrappedFromPosition == position) {
                     scrapViews.remove(i);
                     return view;

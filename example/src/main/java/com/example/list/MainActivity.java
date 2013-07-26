@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.widget.ListAdapter;
 import android.widget.SimpleAdapter;
 
+import com.appunite.list.HorizontalListView;
 import com.appunite.list.ListView;
 import com.google.common.collect.Maps;
 
@@ -21,7 +22,7 @@ public class MainActivity extends SherlockActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
 
-        final ListView listView = (ListView) findViewById(android.R.id.list);
+        final HorizontalListView listView = (HorizontalListView) findViewById(android.R.id.list);
 
         List<HashMap<String, String>> data = new ArrayList<HashMap<String, String>>();
         for (int i = 0; i < 100; ++i) {
