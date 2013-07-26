@@ -75,6 +75,8 @@ import com.actionbarsherlock.view.ActionMode;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Base class that can be used to implement virtualized lists of items. A list does
  * not have a spatial definition here. For instance, subclases of this class can
@@ -91,7 +93,7 @@ import java.util.List;
  * @attr ref android.R.styleable#AbsListView_smoothScrollbar
  * @attr ref android.R.styleable#AbsListView_choiceMode
  */
-public abstract class AbsHorizontalListView extends SuperListView implements TextWatcher,
+public abstract class AbsHorizontalListView extends HorizontalAdapterView<ListAdapter> implements TextWatcher,
         ViewTreeObserver.OnGlobalLayoutListener, Filter.FilterListener,
         ViewTreeObserver.OnTouchModeChangeListener {
 
@@ -171,7 +173,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
     /**
      * Show the first item
      */
-    static final int LAYOUT_FORCE_TOP = 1;
+    static final int LAYOUT_FORCE_LEFT = 1;
 
     /**
      * Force the selected item to be on somewhere on the screen
@@ -181,17 +183,17 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
     /**
      * Show the last item
      */
-    static final int LAYOUT_FORCE_BOTTOM = 3;
+    static final int LAYOUT_FORCE_RIGHT = 3;
 
     /**
      * Make a mSelectedItem appear in a specific location and build the rest of
-     * the views from there. The top is specified by mSpecificTop.
+     * the views from there. The top is specified by mSpecificLeft.
      */
     static final int LAYOUT_SPECIFIC = 4;
 
     /**
      * Layout to sync as a result of a data change. Restore mSyncPosition to have its top
-     * at mSpecificTop
+     * at mSpecificLeft
      */
     static final int LAYOUT_SYNC = 5;
 
@@ -332,17 +334,17 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
     /**
      * Subclasses must retain their measure spec from onMeasure() into this member
      */
-    int mWidthMeasureSpec = 0;
+    int mHeightMeasureSpec = 0;
 
     /**
      * The top scroll indicator
      */
-    View mScrollUp;
+    View mScrollLeft;
 
     /**
      * The down scroll indicator
      */
-    View mScrollDown;
+    View mScrollRight;
 
     /**
      * When the view is scrolling, this flag is set to true to indicate subclasses that
@@ -359,12 +361,12 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
     /**
      * The offset to the top of the mMotionPosition view when the down motion event was received
      */
-    int mMotionViewOriginalTop;
+    int mMotionViewOriginalLeft;
 
     /**
      * The desired offset to the top of the mMotionPosition view after a scroll
      */
-    int mMotionViewNewTop;
+    int mMotionViewNewLeft;
 
     /**
      * The X value associated with the the down motion event
@@ -385,7 +387,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
     /**
      * Y value from on the previous motion event (if any)
      */
-    int mLastY;
+    int mLastX;
 
     /**
      * How far the finger moved before we started scrolling
@@ -411,24 +413,19 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
      * The offset in pixels form the top of the AdapterView to the top
      * of the currently selected view. Used to save and restore state.
      */
-    int mSelectedTop = 0;
+    int mSelectedLeft = 0;
 
     /**
      * Indicates whether the list is stacked from the bottom edge or
      * the top edge.
      */
-    boolean mStackFromBottom;
+    boolean mStackFromRight;
 
     /**
      * When set to true, the list automatically discards the children's
      * bitmap cache after scrolling.
      */
     boolean mScrollingCacheEnabled;
-
-    /**
-     * Whether or not to enable the fast scroll feature on this list
-     */
-    boolean mFastScrollEnabled;
 
     /**
      * Optional callback to notify client when scroll position has changed
@@ -479,7 +476,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
     int mOverscrollMax;
 
     /**
-     * Content height divided by this is the overscroll limit.
+     * Content width divided by this is the overscroll limit.
      */
     static final int OVERSCROLL_LIMIT_DIVISOR = 3;
 
@@ -562,11 +559,6 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
      */
     private int mLastScrollState = OnScrollListener.SCROLL_STATE_IDLE;
 
-    /**
-     * Helper object that renders and controls the fast scroll thumb.
-     */
-    private FastScroller mFastScroller;
-
     private boolean mGlobalLayoutListenerAddedFilter;
 
     private int mTouchSlop;
@@ -615,12 +607,12 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
     /**
      * Tracks the state of the top edge glow.
      */
-    private EdgeEffectCompat mEdgeGlowTop;
+    private EdgeEffectCompat mEdgeGlowLeft;
 
     /**
      * Tracks the state of the bottom edge glow.
      */
-    private EdgeEffectCompat mEdgeGlowBottom;
+    private EdgeEffectCompat mEdgeGlowRight;
 
     /**
      * An estimate of how many pixels are between the top of the list and
@@ -647,8 +639,8 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
      */
     private boolean mForceTranscriptScroll;
 
-    private int mGlowPaddingLeft;
-    private int mGlowPaddingRight;
+    private int mGlowPaddingTop;
+    private int mGlowPaddingBottom;
 
     /**
      * Used for interacting with list items from an accessibility service.
@@ -745,7 +737,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         super(context);
         initAbsListView();
 
-        setVerticalScrollBarEnabled(true);
+        setHorizontalScrollBarEnabled(true);
         TypedArray a = context.obtainStyledAttributes(R.styleable.View);
         initializeScrollbars(a);
         a.recycle();
@@ -770,8 +762,8 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         mDrawSelectorOnTop = a.getBoolean(
                 R.styleable.AbsListView_drawSelectorOnTop, false);
 
-        boolean stackFromBottom = a.getBoolean(R.styleable.AbsListView_stackFromBottom, false);
-        setStackFromBottom(stackFromBottom);
+        boolean stackFromRight = a.getBoolean(R.styleable.AbsListView_stackFromBottom, false);
+        setStackFromRight(stackFromRight);
 
         boolean scrollingCacheEnabled = a.getBoolean(R.styleable.AbsListView_scrollingCache, true);
         setScrollingCacheEnabled(scrollingCacheEnabled);
@@ -786,15 +778,10 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         int color = a.getColor(R.styleable.AbsListView_cacheColorHint, 0);
         setCacheColorHint(color);
 
-        boolean enableFastScroll = a.getBoolean(R.styleable.AbsListView_fastScrollEnabled, false);
-        setFastScrollEnabled(enableFastScroll);
-
         boolean smoothScrollbar = a.getBoolean(R.styleable.AbsListView_smoothScrollbar, true);
         setSmoothScrollbarEnabled(smoothScrollbar);
 
         setChoiceMode(a.getInt(R.styleable.AbsListView_choiceMode, CHOICE_MODE_NONE));
-        setFastScrollAlwaysVisible(
-                a.getBoolean(R.styleable.AbsListView_fastScrollAlwaysVisible, false));
 
         a.recycle();
     }
@@ -821,14 +808,14 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
     @Override
     public void setOverScrollMode(int mode) {
         if (mode != OVER_SCROLL_NEVER) {
-            if (mEdgeGlowTop == null) {
+            if (mEdgeGlowLeft == null) {
                 Context context = getContext();
-                mEdgeGlowTop = new EdgeEffectCompat(context);
-                mEdgeGlowBottom = new EdgeEffectCompat(context);
+                mEdgeGlowLeft = new EdgeEffectCompat(context);
+                mEdgeGlowRight = new EdgeEffectCompat(context);
             }
         } else {
-            mEdgeGlowTop = null;
-            mEdgeGlowBottom = null;
+            mEdgeGlowLeft = null;
+            mEdgeGlowRight = null;
         }
         super.setOverScrollMode(mode);
     }
@@ -1180,110 +1167,14 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         if (childCount == 0) return true;
         if (childCount != mItemCount) return false;
 
-        return getChildAt(0).getTop() >= mListPadding.top &&
-                getChildAt(childCount - 1).getBottom() <= getHeight() - mListPadding.bottom;
+        return getChildAt(0).getLeft() >= mListPadding.left &&
+                getChildAt(childCount - 1).getRight() <= getWidth() - mListPadding.right;
     }
-
-    /**
-     * Enables fast scrolling by letting the user quickly scroll through lists by
-     * dragging the fast scroll thumb. The adapter attached to the list may want
-     * to implement {@link android.widget.SectionIndexer} if it wishes to display alphabet preview and
-     * jump between sections of the list.
-     * @see android.widget.SectionIndexer
-     * @see #isFastScrollEnabled()
-     * @param enabled whether or not to enable fast scrolling
-     */
-    public void setFastScrollEnabled(boolean enabled) {
-        mFastScrollEnabled = enabled;
-        if (enabled) {
-            if (mFastScroller == null) {
-                mFastScroller = new FastScroller(getContext(), this);
-            }
-        } else {
-            if (mFastScroller != null) {
-                mFastScroller.stop();
-                mFastScroller = null;
-            }
-        }
-    }
-
-    /**
-     * Set whether or not the fast scroller should always be shown in place of the
-     * standard scrollbars. Fast scrollers shown in this way will not fade out and will
-     * be a permanent fixture within the list. Best combined with an inset scroll bar style
-     * that will ensure enough padding. This will enable fast scrolling if it is not
-     * already enabled.
-     *
-     * @param alwaysShow true if the fast scroller should always be displayed.
-     * @see #setScrollBarStyle(int)
-     * @see #setFastScrollEnabled(boolean)
-     */
-    public void setFastScrollAlwaysVisible(boolean alwaysShow) {
-        if (alwaysShow && !mFastScrollEnabled) {
-            setFastScrollEnabled(true);
-        }
-
-        if (mFastScroller != null) {
-            mFastScroller.setAlwaysShow(alwaysShow);
-        }
-
-        // TODO I think it is no so important (j.m.)
-//        computeOpaqueFlags();
-//        recomputePadding();
-    }
-
-    /**
-     * Returns true if the fast scroller is set to always show on this view rather than
-     * fade out when not in use.
-     *
-     * @return true if the fast scroller will always show.
-     * @see #setFastScrollAlwaysVisible(boolean)
-     */
-    public boolean isFastScrollAlwaysVisible() {
-        return mFastScrollEnabled && mFastScroller.isAlwaysShowEnabled();
-    }
-
-    @Override
-    public int getVerticalScrollbarWidth() {
-        if (isFastScrollAlwaysVisible()) {
-            return Math.max(super.getVerticalScrollbarWidth(), mFastScroller.getWidth());
-        }
-        return super.getVerticalScrollbarWidth();
-    }
-
-    /**
-     * Returns the current state of the fast scroll feature.
-     * @see #setFastScrollEnabled(boolean)
-     * @return true if fast scroll is enabled, false otherwise
-     */
-    @ViewDebug.ExportedProperty
-    public boolean isFastScrollEnabled() {
-        return mFastScrollEnabled;
-    }
-
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    @Override
-    public void setVerticalScrollbarPosition(int position) {
-        super.setVerticalScrollbarPosition(position);
-        if (mFastScroller != null) {
-            mFastScroller.setScrollbarPosition(position);
-        }
-    }
-
-    /**
-     * If fast scroll is visible, then don't draw the vertical scrollbar.
-     * @hide
-     */
-    // FIXME revmoed because I think it is not so important (j.m.)
-//    @Override
-//    protected boolean isVerticalScrollBarHidden() {
-//        return mFastScroller != null && mFastScroller.isVisible();
-//    }
 
     /**
      * When smooth scrollbar is enabled, the position and size of the scrollbar thumb
      * is computed based on the number of visible pixels in the visible items. This
-     * however assumes that all list items have the same height. If you use a list in
+     * however assumes that all list items have the same width. If you use a list in
      * which items have different heights, the scrollbar will change appearance as the
      * user scrolls through the list. To avoid this issue, you need to disable this
      * property.
@@ -1328,9 +1219,6 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
      * Notify our scroll listener (if there is one) of a change in scroll state
      */
     void invokeOnItemScrollListener() {
-        if (mFastScroller != null) {
-            mFastScroller.onScroll(mFirstPosition, getChildCount(), mItemCount);
-        }
         if (mOnScrollListener != null) {
             mOnScrollListener.onScroll(this, mFirstPosition, getChildCount(), mItemCount);
         }
@@ -1389,15 +1277,15 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         switch (action) {
             case AccessibilityNodeInfo.ACTION_SCROLL_FORWARD: {
                 if (isEnabled() && getLastVisiblePosition() < getCount() - 1) {
-                    final int viewportHeight = getHeight() - mListPadding.top - mListPadding.bottom;
-                    smoothScrollBy(viewportHeight, PositionScroller.SCROLL_DURATION);
+                    final int viewportWidth = getWidth()- mListPadding.left - mListPadding.right;
+                    smoothScrollBy(viewportWidth, PositionScroller.SCROLL_DURATION);
                     return true;
                 }
             } return false;
             case AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD: {
                 if (isEnabled() && mFirstPosition > 0) {
-                    final int viewportHeight = getHeight() - mListPadding.top - mListPadding.bottom;
-                    smoothScrollBy(-viewportHeight, PositionScroller.SCROLL_DURATION);
+                    final int viewportWidth = getWidth()- mListPadding.left - mListPadding.right;
+                    smoothScrollBy(-viewportWidth, PositionScroller.SCROLL_DURATION);
                     return true;
                 }
             } return false;
@@ -1487,25 +1375,25 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
 
     /**
      * Indicates whether the content of this view is pinned to, or stacked from,
-     * the bottom edge.
+     * the right edge.
      *
      * @return true if the content is stacked from the bottom edge, false otherwise
      */
     @ViewDebug.ExportedProperty
-    public boolean isStackFromBottom() {
-        return mStackFromBottom;
+    public boolean isStackFromRight() {
+        return mStackFromRight;
     }
 
     /**
      * When stack from bottom is set to true, the list fills its content starting from
-     * the bottom of the view.
+     * the right of the view.
      *
-     * @param stackFromBottom true to pin the view's content to the bottom edge,
+     * @param stackFromRight true to pin the view's content to the right edge,
      *        false to pin the view's content to the top edge
      */
-    public void setStackFromBottom(boolean stackFromBottom) {
-        if (mStackFromBottom != stackFromBottom) {
-            mStackFromBottom = stackFromBottom;
+    public void setStackFromRight(boolean stackFromRight) {
+        if (mStackFromRight != stackFromRight) {
+            mStackFromRight = stackFromRight;
             requestLayoutIfNecessary();
         }
     }
@@ -1521,9 +1409,9 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
     static class SavedState extends BaseSavedState {
         long selectedId;
         long firstId;
-        int viewTop;
+        int viewLeft;
         int position;
-        int height;
+        int width;
         String filter;
         boolean inActionMode;
         int checkedItemCount;
@@ -1544,9 +1432,9 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             super(in);
             selectedId = in.readLong();
             firstId = in.readLong();
-            viewTop = in.readInt();
+            viewLeft = in.readInt();
             position = in.readInt();
-            height = in.readInt();
+            width = in.readInt();
             filter = in.readString();
             inActionMode = in.readByte() != 0;
             checkedItemCount = in.readInt();
@@ -1567,9 +1455,9 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             super.writeToParcel(out, flags);
             out.writeLong(selectedId);
             out.writeLong(firstId);
-            out.writeInt(viewTop);
+            out.writeInt(viewLeft);
             out.writeInt(position);
-            out.writeInt(height);
+            out.writeInt(width);
             out.writeString(filter);
             out.writeByte((byte) (inActionMode ? 1 : 0));
             out.writeInt(checkedItemCount);
@@ -1588,9 +1476,9 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                     + Integer.toHexString(System.identityHashCode(this))
                     + " selectedId=" + selectedId
                     + " firstId=" + firstId
-                    + " viewTop=" + viewTop
+                    + " viewLeft=" + viewLeft
                     + " position=" + position
-                    + " height=" + height
+                    + " width=" + width
                     + " filter=" + filter
                     + " checkState=" + checkState + "}";
         }
@@ -1625,9 +1513,9 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             // Just keep what we last restored.
             ss.selectedId = mPendingSync.selectedId;
             ss.firstId = mPendingSync.firstId;
-            ss.viewTop = mPendingSync.viewTop;
+            ss.viewLeft = mPendingSync.viewLeft;
             ss.position = mPendingSync.position;
-            ss.height = mPendingSync.height;
+            ss.width = mPendingSync.width;
             ss.filter = mPendingSync.filter;
             ss.inActionMode = mPendingSync.inActionMode;
             ss.checkedItemCount = mPendingSync.checkedItemCount;
@@ -1639,11 +1527,11 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         boolean haveChildren = getChildCount() > 0 && mItemCount > 0;
         long selectedId = getSelectedItemId();
         ss.selectedId = selectedId;
-        ss.height = getHeight();
+        ss.width = getWidth();
 
         if (selectedId >= 0) {
             // Remember the selection
-            ss.viewTop = mSelectedTop;
+            ss.viewLeft = mSelectedLeft;
             ss.position = getSelectedItemPosition();
             ss.firstId = INVALID_POSITION;
         } else {
@@ -1658,7 +1546,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 // and the user wouldn't expect to end up somewhere else when
                 // they revisit the list even if its content has changed.
                 View v = getChildAt(0);
-                ss.viewTop = v.getTop();
+                ss.viewLeft = v.getLeft();
                 int firstPos = mFirstPosition;
                 if (firstPos >= mItemCount) {
                     firstPos = mItemCount - 1;
@@ -1666,7 +1554,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 ss.position = firstPos;
                 ss.firstId = mAdapter.getItemId(firstPos);
             } else {
-                ss.viewTop = 0;
+                ss.viewLeft = 0;
                 ss.firstId = INVALID_POSITION;
                 ss.position = 0;
             }
@@ -1708,14 +1596,14 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         super.onRestoreInstanceState(ss.getSuperState());
         mDataChanged = true;
 
-        mSyncHeight = ss.height;
+        mSyncWidth = ss.width;
 
         if (ss.selectedId >= 0) {
             mNeedSync = true;
             mPendingSync = ss;
-            mSyncRowId = ss.selectedId;
+            mSyncColId = ss.selectedId;
             mSyncPosition = ss.position;
-            mSpecificTop = ss.viewTop;
+            mSpecificLeft = ss.viewLeft;
             mSyncMode = SYNC_SELECTED_POSITION;
         } else if (ss.firstId >= 0) {
             setSelectedPositionInt(INVALID_POSITION);
@@ -1724,9 +1612,9 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             mSelectorPosition = INVALID_POSITION;
             mNeedSync = true;
             mPendingSync = ss;
-            mSyncRowId = ss.firstId;
+            mSyncColId = ss.firstId;
             mSyncPosition = ss.position;
-            mSpecificTop = ss.viewTop;
+            mSpecificLeft = ss.viewLeft;
             mSyncMode = SYNC_FIRST_POSITION;
         }
 
@@ -1827,34 +1715,34 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         mNeedSync = false;
         mPendingSync = null;
         mOldSelectedPosition = INVALID_POSITION;
-        mOldSelectedRowId = INVALID_ROW_ID;
+        mOldSelectedColId = INVALID_COL_ID;
         setSelectedPositionInt(INVALID_POSITION);
         setNextSelectedPositionInt(INVALID_POSITION);
-        mSelectedTop = 0;
+        mSelectedLeft = 0;
         mSelectorPosition = INVALID_POSITION;
         mSelectorRect.setEmpty();
         invalidate();
     }
 
     @Override
-    protected int computeVerticalScrollExtent() {
+    protected int computeHorizontalScrollExtent() {
         final int count = getChildCount();
         if (count > 0) {
             if (mSmoothScrollbarEnabled) {
                 int extent = count * 100;
 
                 View view = getChildAt(0);
-                final int top = view.getTop();
-                int height = view.getHeight();
-                if (height > 0) {
-                    extent += (top * 100) / height;
+                final int left = view.getLeft();
+                int width = view.getWidth();
+                if (width > 0) {
+                    extent += (left * 100) / width;
                 }
 
                 view = getChildAt(count - 1);
-                final int bottom = view.getBottom();
-                height = view.getHeight();
-                if (height > 0) {
-                    extent -= ((bottom - getHeight()) * 100) / height;
+                final int right = view.getRight();
+                width = view.getWidth();
+                if (width > 0) {
+                    extent -= ((right - getWidth()) * 100) / width;
                 }
 
                 return extent;
@@ -1866,18 +1754,18 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
     }
 
     @Override
-    protected int computeVerticalScrollOffset() {
+    protected int computeHorizontalScrollOffset() {
         final int firstPosition = mFirstPosition;
         final int childCount = getChildCount();
         if (firstPosition >= 0 && childCount > 0) {
             if (mSmoothScrollbarEnabled) {
                 final View view = getChildAt(0);
-                final int top = view.getTop();
-                int height = view.getHeight();
-                if (height > 0) {
-                    final int scrollY = getScrollY();
-                    return Math.max(firstPosition * 100 - (top * 100) / height +
-                            (int)((float)scrollY / getHeight() * mItemCount * 100), 0);
+                final int left = view.getLeft();
+                int width = view.getWidth();
+                if (width > 0) {
+                    final int scrollX = getScrollX();
+                    return Math.max(firstPosition * 100 - (left * 100) / width +
+                            (int)((float)scrollX / getWidth() * mItemCount * 100), 0);
                 }
             } else {
                 int index;
@@ -1896,14 +1784,14 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
     }
 
     @Override
-    protected int computeVerticalScrollRange() {
+    protected int computeHorizontalScrollRange() {
         int result;
         if (mSmoothScrollbarEnabled) {
             result = Math.max(mItemCount * 100, 0);
-            final int scrollY = getScrollY();
-            if (scrollY != 0) {
+            final int scrollX = getScrollX();
+            if (scrollX != 0) {
                 // Compensate for overscroll
-                result += Math.abs((int) ((float) scrollY / getHeight() * mItemCount * 100));
+                result += Math.abs((int) ((float) scrollX / getWidth() * mItemCount * 100));
             }
         } else {
             result = mItemCount;
@@ -1912,9 +1800,9 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
     }
 
     @Override
-    protected float getTopFadingEdgeStrength() {
+    protected float getLeftFadingEdgeStrength() {
         final int count = getChildCount();
-        final float fadeEdge = super.getTopFadingEdgeStrength();
+        final float fadeEdge = super.getLeftFadingEdgeStrength();
         if (count == 0) {
             return fadeEdge;
         } else {
@@ -1922,17 +1810,17 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 return 1.0f;
             }
 
-            final int top = getChildAt(0).getTop();
-            final float fadeLength = (float) getVerticalFadingEdgeLength();
-            final int paddingTop = getPaddingTop();
-            return top < paddingTop ? (float) -(top - paddingTop) / fadeLength : fadeEdge;
+            final int left = getChildAt(0).getLeft();
+            final float fadeLength = (float) getHorizontalFadingEdgeLength();
+            final int paddingLeft = getPaddingLeft();
+            return left < paddingLeft ? (float) -(left - paddingLeft) / fadeLength : fadeEdge;
         }
     }
 
     @Override
-    protected float getBottomFadingEdgeStrength() {
+    protected float getRightFadingEdgeStrength() {
         final int count = getChildCount();
-        final float fadeEdge = super.getBottomFadingEdgeStrength();
+        final float fadeEdge = super.getRightFadingEdgeStrength();
         if (count == 0) {
             return fadeEdge;
         } else {
@@ -1940,12 +1828,12 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 return 1.0f;
             }
 
-            final int bottom = getChildAt(count - 1).getBottom();
-            final int height = getHeight();
-            final float fadeLength = (float) getVerticalFadingEdgeLength();
-            final int paddingBottom = getPaddingBottom();
-            return bottom > height - paddingBottom ?
-                    (float) (bottom - height + paddingBottom) / fadeLength : fadeEdge;
+            final int right = getChildAt(count - 1).getRight();
+            final int width = getWidth();
+            final float fadeLength = (float) getHorizontalFadingEdgeLength();
+            final int paddingRight = getPaddingRight();
+            return right > width - paddingRight ?
+                    (float) (right - width + paddingRight) / fadeLength : fadeEdge;
         }
     }
 
@@ -1963,11 +1851,11 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         // Check if our previous measured size was at a point where we should scroll later.
         if (mTranscriptMode == TRANSCRIPT_MODE_NORMAL) {
             final int childCount = getChildCount();
-            final int listBottom = getHeight() - getPaddingBottom();
+            final int listRight = getWidth() - getPaddingRight();
             final View lastChild = getChildAt(childCount - 1);
-            final int lastBottom = lastChild != null ? lastChild.getBottom() : listBottom;
+            final int lastRight = lastChild != null ? lastChild.getRight() : listRight;
             mForceTranscriptScroll = mFirstPosition + childCount >= mLastHandledItemCount &&
-                    lastBottom <= listBottom;
+                    lastRight <= listRight;
         }
     }
 
@@ -1998,14 +1886,10 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             mRecycler.markChildrenDirty();
         }
 
-        if (mFastScroller != null && mItemCount != mOldItemCount) {
-            mFastScroller.onItemCountChanged(mOldItemCount, mItemCount);
-        }
-
         layoutChildren();
         mInLayout = false;
 
-        mOverscrollMax = (b - t) / OVERSCROLL_LIMIT_DIVISOR;
+        mOverscrollMax = (r - l) / OVERSCROLL_LIMIT_DIVISOR;
     }
 
     /**
@@ -2015,37 +1899,37 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
     }
 
     void updateScrollIndicators() {
-        if (mScrollUp != null) {
-            boolean canScrollUp;
+        if (mScrollLeft != null) {
+            boolean canScrollLeft;
             // 0th element is not visible
-            canScrollUp = mFirstPosition > 0;
+            canScrollLeft = mFirstPosition > 0;
 
             // ... Or top of 0th element is not visible
-            if (!canScrollUp) {
+            if (!canScrollLeft) {
                 if (getChildCount() > 0) {
                     View child = getChildAt(0);
-                    canScrollUp = child.getTop() < mListPadding.top;
+                    canScrollLeft = child.getLeft() < mListPadding.left;
                 }
             }
 
-            mScrollUp.setVisibility(canScrollUp ? View.VISIBLE : View.INVISIBLE);
+            mScrollLeft.setVisibility(canScrollLeft ? View.VISIBLE : View.INVISIBLE);
         }
 
-        if (mScrollDown != null) {
-            boolean canScrollDown;
+        if (mScrollRight != null) {
+            boolean canScrollRight;
             int count = getChildCount();
 
             // Last item is not visible
-            canScrollDown = (mFirstPosition + count) < mItemCount;
+            canScrollRight = (mFirstPosition + count) < mItemCount;
 
             // ... Or bottom of the last element is not visible
-            if (!canScrollDown && count > 0) {
+            if (!canScrollRight && count > 0) {
                 View child = getChildAt(count - 1);
-                final int bottom = getBottom();
-                canScrollDown = child.getBottom() > bottom - mListPadding.bottom;
+                final int right = getRight();
+                canScrollRight = child.getRight() > right - mListPadding.right;
             }
 
-            mScrollDown.setVisibility(canScrollDown ? View.VISIBLE : View.INVISIBLE);
+            mScrollRight.setVisibility(canScrollRight ? View.VISIBLE : View.INVISIBLE);
         }
     }
 
@@ -2367,9 +2251,6 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             rememberSyncState();
         }
 
-        if (mFastScroller != null) {
-            mFastScroller.onSizeChanged(w, h, oldw, oldh);
-        }
     }
 
     /**
@@ -2498,9 +2379,9 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         }
     }
 
-    public void setScrollIndicators(View up, View down) {
-        mScrollUp = up;
-        mScrollDown = down;
+    public void setScrollIndicators(View left, View right) {
+        mScrollLeft = left;
+        mScrollRight = right;
     }
 
     void updateSelectorState() {
@@ -2661,8 +2542,8 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 if (mPositionScroller != null) {
                     mPositionScroller.stop();
                 }
-                if (getScrollY() != 0) {
-                    scrollTo(getScrollX(), 0);
+                if (getScrollX() != 0) {
+                    scrollTo(0, getScrollY());
                     invalidateParentCachesUnhide();
                     finishGlows();
                     invalidate();
@@ -2787,7 +2668,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 if (!mDataChanged) {
                     boolean handled = false;
                     if (sameWindow()) {
-                        handled = performLongPress(v, mSelectedPosition, mSelectedRowId);
+                        handled = performLongPress(v, mSelectedPosition, mSelectedColId);
                     }
                     if (handled) {
                         setPressed(false);
@@ -2891,7 +2772,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
 
                 final View view = getChildAt(mSelectedPosition - mFirstPosition);
                 if (view != null) {
-                    performItemClick(view, mSelectedPosition, mSelectedRowId);
+                    performItemClick(view, mSelectedPosition, mSelectedColId);
                     view.setPressed(false);
                 }
                 setPressed(false);
@@ -2942,15 +2823,15 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
      *
      * @param x X in local coordinate
      * @param y Y in local coordinate
-     * @return The rowId of the item which contains the specified point, or {@link #INVALID_ROW_ID}
+     * @return The rowId of the item which contains the specified point, or {@link #INVALID_COL_ID}
      *         if the point does not intersect an item.
      */
-    public long pointToRowId(int x, int y) {
+    public long pointToColId(int x, int y) {
         int position = pointToPosition(x, y);
         if (position >= 0) {
             return mAdapter.getItemId(position);
         }
-        return INVALID_ROW_ID;
+        return INVALID_COL_ID;
     }
 
     final class CheckForTap implements Runnable {
@@ -2999,12 +2880,12 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         }
     }
 
-    private boolean startScrollIfNeeded(int y) {
+    private boolean startScrollIfNeeded(int x) {
         // Check if we have moved far enough that it looks more like a
         // scroll than a tap
-        final int deltaY = y - mMotionY;
-        final int distance = Math.abs(deltaY);
-        final boolean overscroll = getScrollY() != 0;
+        final int deltaX = x - mMotionX;
+        final int distance = Math.abs(deltaX);
+        final boolean overscroll = getScrollX() != 0;
         if (overscroll || distance > mTouchSlop) {
             createScrollingCache();
             if (overscroll) {
@@ -3012,7 +2893,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 mMotionCorrection = 0;
             } else {
                 mTouchMode = TOUCH_MODE_SCROLL;
-                mMotionCorrection = deltaY > 0 ? mTouchSlop : -mTouchSlop;
+                mMotionCorrection = deltaX > 0 ? mTouchSlop : -mTouchSlop;
             }
             final Handler handler = getHandler();
             // Handler should not be null unless the AbsListView is not attached to a
@@ -3033,17 +2914,17 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             if (parent != null) {
                 parent.requestDisallowInterceptTouchEvent(true);
             }
-            scrollIfNeeded(y);
+            scrollIfNeeded(x);
             return true;
         }
 
         return false;
     }
 
-    private void scrollIfNeeded(int y) {
-        final int rawDeltaY = y - mMotionY;
-        final int deltaY = rawDeltaY - mMotionCorrection;
-        int incrementalDeltaY = mLastY != Integer.MIN_VALUE ? y - mLastY : deltaY;
+    private void scrollIfNeeded(int x) {
+        final int rawDeltaX = x - mMotionX;
+        final int deltaX = rawDeltaX - mMotionCorrection;
+        int incrementalDeltaX = mLastX != Integer.MIN_VALUE ? x - mLastX : deltaX;
 
         if (mTouchMode == TOUCH_MODE_SCROLL) {
             if (PROFILE_SCROLLING) {
@@ -3059,12 +2940,12 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             //    mScrollStrictSpan = StrictMode.enterCriticalSpan("AbsListView-scroll");
             //}
 
-            if (y != mLastY) {
+            if (x != mLastX) {
                 // We may be here after stopping a fling and continuing to scroll.
                 // If so, we haven't disallowed intercepting touch events yet.
                 // Make sure that we do so in case we're in a parent that can intercept.
                 if (!mDisallowIntercept &&
-                        Math.abs(rawDeltaY) > mTouchSlop) {
+                        Math.abs(rawDeltaX) > mTouchSlop) {
                     final ViewParent parent = getParent();
                     if (parent != null) {
                         parent.requestDisallowInterceptTouchEvent(true);
@@ -3080,16 +2961,16 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                     motionIndex = getChildCount() / 2;
                 }
 
-                int motionViewPrevTop = 0;
+                int motionViewPrevLeft = 0;
                 View motionView = this.getChildAt(motionIndex);
                 if (motionView != null) {
-                    motionViewPrevTop = motionView.getTop();
+                    motionViewPrevLeft = motionView.getLeft();
                 }
 
                 // No need to do all this work if we're not going to move anyway
                 boolean atEdge = false;
-                if (incrementalDeltaY != 0) {
-                    atEdge = trackMotionScroll(deltaY, incrementalDeltaY);
+                if (incrementalDeltaX != 0) {
+                    atEdge = trackMotionScroll(deltaX, incrementalDeltaX);
                 }
 
                 // Check to see if we have bumped into the scroll limit
@@ -3097,16 +2978,16 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 if (motionView != null) {
                     // Check if the top of the motion view is where it is
                     // supposed to be
-                    final int motionViewRealTop = motionView.getTop();
+                    final int motionViewRealLeft = motionView.getLeft();
                     if (atEdge) {
                         // Apply overscroll
-                        final int scrollY = getScrollY();
+                        final int scrollX = getScrollX();
 
-                        int overscroll = -incrementalDeltaY -
-                                (motionViewRealTop - motionViewPrevTop);
-                        overScrollBy(0, overscroll, 0, scrollY, 0, 0,
-                                0, mOverscrollDistance, true);
-                        if (Math.abs(mOverscrollDistance) == Math.abs(scrollY)) {
+                        int overscroll = -incrementalDeltaX -
+                                (motionViewRealLeft - motionViewPrevLeft);
+
+                        overScrollBy(overscroll, 0, scrollX, 0, 0, 0, mOverflingDistance, 0, true);
+                        if (Math.abs(mOverscrollDistance) == Math.abs(scrollX)) {
                             // Don't allow overfling if we're at the edge.
                             if (mVelocityTracker != null) {
                                 mVelocityTracker.clear();
@@ -3119,87 +3000,88 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                                         !contentFits())) {
                             mDirection = 0; // Reset when entering overscroll.
                             mTouchMode = TOUCH_MODE_OVERSCROLL;
-                            if (rawDeltaY > 0) {
-                                mEdgeGlowTop.onPull((float) overscroll / getHeight());
-                                if (!mEdgeGlowBottom.isFinished()) {
-                                    mEdgeGlowBottom.onRelease();
+                            if (rawDeltaX > 0) {
+                                mEdgeGlowLeft.onPull((float) overscroll / getWidth());
+                                if (!mEdgeGlowRight.isFinished()) {
+                                    mEdgeGlowRight.onRelease();
                                 }
-                            } else if (rawDeltaY < 0) {
-                                mEdgeGlowBottom.onPull((float) overscroll / getHeight());
-                                if (!mEdgeGlowTop.isFinished()) {
-                                    mEdgeGlowTop.onRelease();
+                            } else if (rawDeltaX < 0) {
+                                mEdgeGlowRight.onPull((float) overscroll / getWidth());
+                                if (!mEdgeGlowLeft.isFinished()) {
+                                    mEdgeGlowLeft.onRelease();
                                 }
                             }
                             invalidate();
                         }
                     }
-                    mMotionY = y;
+                    mMotionX = x;
                 }
-                mLastY = y;
+                mLastX = x;
             }
         } else if (mTouchMode == TOUCH_MODE_OVERSCROLL) {
-            if (y != mLastY) {
-                final int oldScroll = getScrollY();
-                final int newScroll = oldScroll - incrementalDeltaY;
-                int newDirection = y > mLastY ? 1 : -1;
+            if (x != mLastX) {
+                final int oldScroll = getScrollX();
+                final int newScroll = oldScroll - incrementalDeltaX;
+                int newDirection = x > mLastX ? 1 : -1;
 
                 if (mDirection == 0) {
                     mDirection = newDirection;
                 }
 
-                int overScrollDistance = -incrementalDeltaY;
+                int overScrollDistance = -incrementalDeltaX;
                 if ((newScroll < 0 && oldScroll >= 0) || (newScroll > 0 && oldScroll <= 0)) {
                     overScrollDistance = -oldScroll;
-                    incrementalDeltaY += overScrollDistance;
+                    incrementalDeltaX += overScrollDistance;
                 } else {
-                    incrementalDeltaY = 0;
+                    incrementalDeltaX = 0;
                 }
 
                 if (overScrollDistance != 0) {
-                    final int scrollY = getScrollY();
-                    overScrollBy(0, overScrollDistance, 0, scrollY, 0, 0,
-                            0, mOverscrollDistance, true);
+                    final int scrollX = getScrollX();
+                    overScrollBy(overScrollDistance, 0, scrollX, 0, 0, 0,
+                            mOverscrollDistance, 0, true);
                     final int overscrollMode = getOverScrollMode();
                     if (overscrollMode == OVER_SCROLL_ALWAYS ||
                             (overscrollMode == OVER_SCROLL_IF_CONTENT_SCROLLS &&
                                     !contentFits())) {
-                        if (rawDeltaY > 0) {
-                            mEdgeGlowTop.onPull((float) overScrollDistance / getHeight());
-                            if (!mEdgeGlowBottom.isFinished()) {
-                                mEdgeGlowBottom.onRelease();
+                        if (rawDeltaX > 0) {
+                            mEdgeGlowLeft.onPull((float) overScrollDistance / getWidth());
+                            if (!mEdgeGlowRight.isFinished()) {
+                                mEdgeGlowRight.onRelease();
                             }
-                        } else if (rawDeltaY < 0) {
-                            mEdgeGlowBottom.onPull((float) overScrollDistance / getHeight());
-                            if (!mEdgeGlowTop.isFinished()) {
-                                mEdgeGlowTop.onRelease();
+                        } else if (rawDeltaX < 0) {
+                            mEdgeGlowRight.onPull((float) overScrollDistance / getWidth());
+                            if (!mEdgeGlowLeft.isFinished()) {
+                                mEdgeGlowLeft.onRelease();
                             }
                         }
                         invalidate();
                     }
                 }
 
-                if (incrementalDeltaY != 0) {
+                if (incrementalDeltaX != 0) {
                     // Coming back to 'real' list scrolling
-                    if (getScrollY() != 0) {
-                        scrollTo(getScrollX(), 0);
+                    if (getScrollX() != 0) {
+                        scrollTo(0, getScrollY());
                         invalidateParentIfNeededUnhide();
                     }
 
-                    trackMotionScroll(incrementalDeltaY, incrementalDeltaY);
+                    // FIXME fix this
+                    trackMotionScroll(incrementalDeltaX, incrementalDeltaX);
 
                     mTouchMode = TOUCH_MODE_SCROLL;
 
                     // We did not scroll the full amount. Treat this essentially like the
                     // start of a new touch scroll
-                    final int motionPosition = findClosestMotionRow(y);
+                    final int motionPosition = findClosestMotionCol(x);
 
                     mMotionCorrection = 0;
                     View motionView = getChildAt(motionPosition - mFirstPosition);
-                    mMotionViewOriginalTop = motionView != null ? motionView.getTop() : 0;
-                    mMotionY = y;
+                    mMotionViewOriginalLeft = motionView != null ? motionView.getLeft() : 0;
+                    mMotionX = x;
                     mMotionPosition = motionPosition;
                 }
-                mLastY = y;
+                mLastX = x;
                 mDirection = newDirection;
             }
         }
@@ -3212,7 +3094,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             // Layout, but only if we already have done so previously.
             // (Otherwise may clobber a LAYOUT_SYNC layout that was requested to restore
             // state.)
-            if (getHeight() > 0 && getChildCount() > 0) {
+            if (getWidth() > 0 && getChildCount() > 0) {
                 // We do not lose focus initiating a touch (since AbsListView is focusable in
                 // touch mode). Force an initial layout to get rid of the selection.
                 layoutChildren();
@@ -3228,8 +3110,8 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                     mPositionScroller.stop();
                 }
 
-                if (getScrollY() != 0) {
-                    scrollTo(getScrollX(), 0);
+                if (getScrollX() != 0) {
+                    scrollTo(0, getScrollY());
                     invalidateParentCachesUnhide();
                     finishGlows();
                     invalidate();
@@ -3258,13 +3140,6 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             return false;
         }
 
-        if (mFastScroller != null) {
-            boolean intercepted = mFastScroller.onTouchEvent(ev);
-            if (intercepted) {
-                return true;
-            }
-        }
-
         final int action = ev.getAction();
 
         View v;
@@ -3281,8 +3156,8 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                     mPositionScroller.stop();
                 }
                 mTouchMode = TOUCH_MODE_OVERSCROLL;
-                mMotionX = (int) ev.getX();
-                mMotionY = mLastY = (int) ev.getY();
+                mMotionX = mLastX = (int) ev.getX();
+                mMotionY = (int) ev.getY();
                 mMotionCorrection = 0;
                 mActivePointerId = ev.getPointerId(0);
                 mDirection = 0;
@@ -3312,7 +3187,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                             createScrollingCache();
                             mTouchMode = TOUCH_MODE_SCROLL;
                             mMotionCorrection = 0;
-                            motionPosition = findMotionRow(y);
+                            motionPosition = findMotionCol(x);
                             mFlingRunnable.flywheelTouch();
                         }
                     }
@@ -3321,12 +3196,12 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 if (motionPosition >= 0) {
                     // Remember where the motion event started
                     v = getChildAt(motionPosition - mFirstPosition);
-                    mMotionViewOriginalTop = v.getTop();
+                    mMotionViewOriginalLeft = v.getLeft();
                 }
                 mMotionX = x;
                 mMotionY = y;
                 mMotionPosition = motionPosition;
-                mLastY = Integer.MIN_VALUE;
+                mLastX = Integer.MIN_VALUE;
                 break;
             }
             }
@@ -3345,7 +3220,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 pointerIndex = 0;
                 mActivePointerId = ev.getPointerId(pointerIndex);
             }
-            final int y = (int) ev.getY(pointerIndex);
+            final int x = (int) ev.getX(pointerIndex);
 
             if (mDataChanged) {
                 // Re-sync everything if data has been changed
@@ -3359,11 +3234,11 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             case TOUCH_MODE_DONE_WAITING:
                 // Check if we have moved far enough that it looks more like a
                 // scroll than a tap
-                startScrollIfNeeded(y);
+                startScrollIfNeeded(x);
                 break;
             case TOUCH_MODE_SCROLL:
             case TOUCH_MODE_OVERSCROLL:
-                scrollIfNeeded(y);
+                scrollIfNeeded(x);
                 break;
             }
             break;
@@ -3377,8 +3252,8 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 final int motionPosition = mMotionPosition;
                 final View child = getChildAt(motionPosition - mFirstPosition);
 
-                final float x = ev.getX();
-                final boolean inList = x > mListPadding.left && x < getWidth() - mListPadding.right;
+                final float y = ev.getY();
+                final boolean inList = y > mListPadding.top && y < getHeight() - mListPadding.bottom;
 
                 if (child != null && !child.hasFocusable() && inList) {
                     if (mTouchMode != TOUCH_MODE_DOWN) {
@@ -3447,13 +3322,13 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             case TOUCH_MODE_SCROLL:
                 final int childCount = getChildCount();
                 if (childCount > 0) {
-                    final int firstChildTop = getChildAt(0).getTop();
-                    final int lastChildBottom = getChildAt(childCount - 1).getBottom();
-                    final int contentTop = mListPadding.top;
-                    final int contentBottom = getHeight() - mListPadding.bottom;
-                    if (mFirstPosition == 0 && firstChildTop >= contentTop &&
+                    final int firstChildLeft = getChildAt(0).getLeft();
+                    final int lastChildRight = getChildAt(childCount - 1).getRight();
+                    final int contentLeft = mListPadding.left;
+                    final int contentRight = getWidth() - mListPadding.right;
+                    if (mFirstPosition == 0 && firstChildLeft >= contentLeft &&
                             mFirstPosition + childCount < mItemCount &&
-                            lastChildBottom <= getHeight() - contentBottom) {
+                            lastChildRight <= getWidth() - contentRight) {
                         mTouchMode = TOUCH_MODE_REST;
                         reportScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
                     } else {
@@ -3461,16 +3336,16 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                         velocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
 
                         final int initialVelocity = (int)
-                                (velocityTracker.getYVelocity(mActivePointerId) * mVelocityScale);
+                                (velocityTracker.getXVelocity(mActivePointerId) * mVelocityScale);
                         // Fling if we have enough velocity and we aren't at a boundary.
                         // Since we can potentially overfling more than we can overscroll, don't
                         // allow the weird behavior where you can scroll to a boundary then
                         // fling further.
                         if (Math.abs(initialVelocity) > mMinimumVelocity &&
                                 !((mFirstPosition == 0 &&
-                                        firstChildTop == contentTop - mOverscrollDistance) ||
+                                        firstChildLeft == contentLeft - mOverscrollDistance) ||
                                   (mFirstPosition + childCount == mItemCount &&
-                                        lastChildBottom == contentBottom + mOverscrollDistance))) {
+                                        lastChildRight == contentRight + mOverscrollDistance))) {
                             if (mFlingRunnable == null) {
                                 mFlingRunnable = new FlingRunnable();
                             }
@@ -3500,7 +3375,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 }
                 final VelocityTracker velocityTracker = mVelocityTracker;
                 velocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
-                final int initialVelocity = (int) velocityTracker.getYVelocity(mActivePointerId);
+                final int initialVelocity = (int) velocityTracker.getXVelocity(mActivePointerId);
 
                 reportScrollStateChange(OnScrollListener.SCROLL_STATE_FLING);
                 if (Math.abs(initialVelocity) > mMinimumVelocity) {
@@ -3514,9 +3389,9 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
 
             setPressed(false);
 
-            if (mEdgeGlowTop != null) {
-                mEdgeGlowTop.onRelease();
-                mEdgeGlowBottom.onRelease();
+            if (mEdgeGlowLeft != null) {
+                mEdgeGlowLeft.onRelease();
+                mEdgeGlowRight.onRelease();
             }
 
             // Need to redraw since we probably aren't drawing the selector anymore
@@ -3576,9 +3451,9 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 recycleVelocityTracker();
             }
 
-            if (mEdgeGlowTop != null) {
-                mEdgeGlowTop.onRelease();
-                mEdgeGlowBottom.onRelease();
+            if (mEdgeGlowLeft != null) {
+                mEdgeGlowLeft.onRelease();
+                mEdgeGlowRight.onRelease();
             }
             mActivePointerId = INVALID_POINTER;
             break;
@@ -3592,10 +3467,10 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             if (motionPosition >= 0) {
                 // Remember where the motion event started
                 v = getChildAt(motionPosition - mFirstPosition);
-                mMotionViewOriginalTop = v.getTop();
+                mMotionViewOriginalLeft = v.getLeft();
                 mMotionPosition = motionPosition;
             }
-            mLastY = y;
+            mLastX = x;
             break;
         }
 
@@ -3613,10 +3488,10 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             if (motionPosition >= 0) {
                 // Remember where the motion event started
                 v = getChildAt(motionPosition - mFirstPosition);
-                mMotionViewOriginalTop = v.getTop();
+                mMotionViewOriginalLeft = v.getLeft();
                 mMotionPosition = motionPosition;
             }
-            mLastY = y;
+            mLastX = x;
             break;
         }
         }
@@ -3628,9 +3503,9 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
     protected void onOverScrolled(int scrollX, int scrollY, boolean clampedX, boolean clampedY) {
         final int scrollXOld = getScrollX();
         final int scrollYOld = getScrollY();
-        if (scrollYOld != scrollY) {
-            onScrollChanged(scrollXOld, scrollY, scrollXOld, scrollYOld);
-            scrollTo(scrollXOld, scrollY);
+        if (scrollXOld != scrollX) {
+            onScrollChanged(scrollX, scrollYOld, scrollXOld, scrollYOld);
+            scrollTo(scrollX, scrollYOld);
             invalidateParentIfNeededUnhide();
 
             awakenScrollBars();
@@ -3644,9 +3519,9 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             switch (event.getAction()) {
                 case MotionEvent.ACTION_SCROLL: {
                     if (mTouchMode == TOUCH_MODE_REST) {
-                        final float vscroll = event.getAxisValue(MotionEvent.AXIS_VSCROLL);
-                        if (vscroll != 0) {
-                            final int delta = (int) (vscroll * getVerticalScrollFactorUnhide());
+                        final float hscroll = event.getAxisValue(MotionEvent.AXIS_HSCROLL);
+                        if (hscroll != 0) {
+                            final int delta = (int) (hscroll * getHorizontalScrollFactorUnhide());
                             if (!trackMotionScroll(delta, delta)) {
                                 return true;
                             }
@@ -3661,36 +3536,38 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
     @Override
     public void draw(Canvas canvas) {
         super.draw(canvas);
-        if (mEdgeGlowTop != null) {
-            final int scrollY = getScrollY();
+        if (mEdgeGlowLeft != null) {
+            final int scrollX = getScrollX();
             boolean needsInvalidate = false;
-            if (!mEdgeGlowTop.isFinished()) {
+            if (!mEdgeGlowLeft.isFinished()) {
                 final int restoreCount = canvas.save();
-                final int leftPadding = mListPadding.left + mGlowPaddingLeft;
-                final int rightPadding = mListPadding.right + mGlowPaddingRight;
-                final int width = getWidth() - leftPadding - rightPadding;
+                final int topPadding = mListPadding.top + mGlowPaddingTop;
+                final int bottomPadding = mListPadding.bottom + mGlowPaddingBottom;
+                final int height = getHeight() - topPadding - bottomPadding;
 
-                int edgeY = Math.min(0, scrollY + mFirstPositionDistanceGuess);
-                canvas.translate(leftPadding, edgeY);
-                mEdgeGlowTop.setSize(width, getHeight());
-                if (mEdgeGlowTop.draw(canvas)) {
+                // TODO we need rotation here (j.m.)
+                int edgeX = Math.min(0, scrollX + mFirstPositionDistanceGuess);
+                canvas.translate(edgeX, topPadding);
+                mEdgeGlowLeft.setSize(height, getHeight());
+                if (mEdgeGlowLeft.draw(canvas)) {
                     needsInvalidate = true;
                 }
                 canvas.restoreToCount(restoreCount);
             }
-            if (!mEdgeGlowBottom.isFinished()) {
+            if (!mEdgeGlowRight.isFinished()) {
                 final int restoreCount = canvas.save();
-                final int leftPadding = mListPadding.left + mGlowPaddingLeft;
-                final int rightPadding = mListPadding.right + mGlowPaddingRight;
-                final int width = getWidth() - leftPadding - rightPadding;
-                final int height = getHeight();
+                final int topPadding = mListPadding.top + mGlowPaddingTop;
+                final int bottomPadding = mListPadding.bottom + mGlowPaddingBottom;
+                final int height = getHeight() - topPadding - bottomPadding;
+                final int width = getWidth();
 
-                int edgeX = -width + leftPadding;
-                int edgeY = Math.max(height, scrollY + mLastPositionDistanceGuess);
-                canvas.translate(edgeX, edgeY);
-                canvas.rotate(180, width, 0);
-                mEdgeGlowBottom.setSize(width, height);
-                if (mEdgeGlowBottom.draw(canvas)) {
+                int edgeY = -height + topPadding;
+                int edgeX = Math.max(width, scrollX + mLastPositionDistanceGuess);
+                canvas.translate(edgeY, edgeX);
+                canvas.rotate(180, height, 0);
+                // TODO we need rotation here (j.m.)
+                mEdgeGlowRight.setSize(height, width);
+                if (mEdgeGlowRight.draw(canvas)) {
                     needsInvalidate = true;
                 }
                 canvas.restoreToCount(restoreCount);
@@ -3699,26 +3576,14 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 invalidate();
             }
         }
-        if (mFastScroller != null) {
-            final int scrollY = getScrollY();
-            if (scrollY != 0) {
-                // Pin to the top/bottom during overscroll
-                int restoreCount = canvas.save();
-                canvas.translate(0, (float) scrollY);
-                mFastScroller.draw(canvas);
-                canvas.restoreToCount(restoreCount);
-            } else {
-                mFastScroller.draw(canvas);
-            }
-        }
     }
 
     /**
      * @hide
      */
-    public void setOverScrollEffectPadding(int leftPadding, int rightPadding) {
-        mGlowPaddingLeft = leftPadding;
-        mGlowPaddingRight = rightPadding;
+    public void setOverScrollEffectPadding(int topPadding, int bottomPadding) {
+        mGlowPaddingTop = topPadding;
+        mGlowPaddingBottom = bottomPadding;
     }
 
     private void initOrResetVelocityTracker() {
@@ -3767,13 +3632,6 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             return false;
         }
 
-        if (mFastScroller != null) {
-            boolean intercepted = mFastScroller.onInterceptTouchEvent(ev);
-            if (intercepted) {
-                return true;
-            }
-        }
-
         switch (action & MotionEvent.ACTION_MASK) {
         case MotionEvent.ACTION_DOWN: {
             int touchMode = mTouchMode;
@@ -3786,19 +3644,19 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             final int y = (int) ev.getY();
             mActivePointerId = ev.getPointerId(0);
 
-            int motionPosition = findMotionRow(y);
+            int motionPosition = findMotionCol(x);
             if (touchMode != TOUCH_MODE_FLING && motionPosition >= 0) {
                 // User clicked on an actual view (and was not stopping a fling).
                 // Remember where the motion event started
                 v = getChildAt(motionPosition - mFirstPosition);
-                mMotionViewOriginalTop = v.getTop();
+                mMotionViewOriginalLeft = v.getLeft();
                 mMotionX = x;
                 mMotionY = y;
                 mMotionPosition = motionPosition;
                 mTouchMode = TOUCH_MODE_DOWN;
                 clearScrollingCache();
             }
-            mLastY = Integer.MIN_VALUE;
+            mLastX = Integer.MIN_VALUE;
             initOrResetVelocityTracker();
             mVelocityTracker.addMovement(ev);
             if (touchMode == TOUCH_MODE_FLING) {
@@ -3815,10 +3673,10 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                     pointerIndex = 0;
                     mActivePointerId = ev.getPointerId(pointerIndex);
                 }
-                final int y = (int) ev.getY(pointerIndex);
+                final int x = (int) ev.getX(pointerIndex);
                 initVelocityTrackerIfNotExists();
                 mVelocityTracker.addMovement(ev);
-                if (startScrollIfNeeded(y)) {
+                if (startScrollIfNeeded(x)) {
                     return true;
                 }
                 break;
@@ -3914,7 +3772,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         /**
          * Y value reported by mScroller on the previous fling
          */
-        private int mLastFlingY;
+        private int mLastFlingX;
 
         // Unhide from Scroller (j.m.)
         public boolean isScrollingInDirectionCompat(OverScroller scroller, float xvel, float yvel) {
@@ -3937,10 +3795,10 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 }
 
                 vt.computeCurrentVelocity(1000, mMaximumVelocity);
-                final float yvel = -vt.getYVelocity(activeId);
+                final float xvel = -vt.getXVelocity(activeId);
 
-                if (Math.abs(yvel) >= mMinimumVelocity
-                        && isScrollingInDirectionCompat(scroller, 0, yvel)) {
+                if (Math.abs(xvel) >= mMinimumVelocity
+                        && isScrollingInDirectionCompat(scroller, xvel, 0)) {
                     // Keep the fling alive a little longer
                     postDelayed(this, FLYWHEEL_TIMEOUT);
                 } else {
@@ -3958,11 +3816,11 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         }
 
         void start(int initialVelocity) {
-            int initialY = initialVelocity < 0 ? Integer.MAX_VALUE : 0;
-            mLastFlingY = initialY;
+            int initialX = initialVelocity < 0 ? Integer.MAX_VALUE : 0;
+            mLastFlingX = initialX;
             // probably not needed there (j.m.)
 //            mScroller.setInterpolator(null);
-            mScroller.fling(0, initialY, 0, initialVelocity,
+            mScroller.fling(initialX, 0, initialVelocity, 0,
                     0, Integer.MAX_VALUE, 0, Integer.MAX_VALUE);
             mTouchMode = TOUCH_MODE_FLING;
             ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
@@ -3981,7 +3839,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         }
 
         void startSpringback() {
-            if (mScroller.springBack(0, getScrollY(), 0, 0, 0, 0)) {
+            if (mScroller.springBack(getScrollX(), 0, 0, 0, 0, 0)) {
                 mTouchMode = TOUCH_MODE_OVERFLING;
                 invalidate();
                 ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
@@ -3994,24 +3852,25 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         void startOverfling(int initialVelocity) {
             // probably not needed there (j.m.)
 //            mScroller.setInterpolator(null);
-            mScroller.fling(0, getScrollY(), 0, initialVelocity, 0, 0,
-                    Integer.MIN_VALUE, Integer.MAX_VALUE, 0, getHeight());
+            mScroller.fling(getScrollX(), 0, initialVelocity, 0,
+                    Integer.MIN_VALUE, Integer.MAX_VALUE,
+                    0, 0, getWidth(), 0);
             mTouchMode = TOUCH_MODE_OVERFLING;
             invalidate();
             ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
         }
 
         void edgeReached(int delta) {
-            mScroller.notifyVerticalEdgeReached(getScrollY(), 0, mOverflingDistance);
+            mScroller.notifyHorizontalEdgeReached(getScrollX(), 0, mOverflingDistance);
             final int overscrollMode = getOverScrollMode();
             if (overscrollMode == OVER_SCROLL_ALWAYS ||
                     (overscrollMode == OVER_SCROLL_IF_CONTENT_SCROLLS && !contentFits())) {
                 mTouchMode = TOUCH_MODE_OVERFLING;
                 final int vel = (int) mScroller.getCurrVelocity();
                 if (delta > 0) {
-                    mEdgeGlowTop.onAbsorb(vel);
+                    mEdgeGlowLeft.onAbsorb(vel);
                 } else {
-                    mEdgeGlowBottom.onAbsorb(vel);
+                    mEdgeGlowRight.onAbsorb(vel);
                 }
             } else {
                 mTouchMode = TOUCH_MODE_REST;
@@ -4024,11 +3883,11 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         }
 
         void startScroll(int distance, int duration, boolean linear) {
-            int initialY = distance < 0 ? Integer.MAX_VALUE : 0;
-            mLastFlingY = initialY;
+            int initialX = distance < 0 ? Integer.MAX_VALUE : 0;
+            mLastFlingX = initialX;
             // TODO probably not necessary (j.m.)
 //            mScroller.setInterpolator(linear ? sLinearInterpolator : null);
-            mScroller.startScroll(0, initialY, 0, distance, duration);
+            mScroller.startScroll(initialX, 0, distance, 0, duration);
             mTouchMode = TOUCH_MODE_FLING;
             ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
         }
@@ -4077,40 +3936,40 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
 
                 final OverScroller scroller = mScroller;
                 boolean more = scroller.computeScrollOffset();
-                final int y = scroller.getCurrY();
+                final int x = scroller.getCurrX();
 
                 // Flip sign to convert finger direction to list items direction
                 // (e.g. finger moving down means list is moving towards the top)
-                int delta = mLastFlingY - y;
-                final int paddingBottom = getPaddingBottom();
-                final int paddingTop = getPaddingTop();
+                int delta = mLastFlingX - x;
+                final int paddingRight = getPaddingRight();
+                final int paddingLeft = getPaddingLeft();
 
                 // Pretend that each frame of a fling scroll is a touch scroll
                 if (delta > 0) {
                     // List is moving towards the top. Use first view as mMotionPosition
                     mMotionPosition = mFirstPosition;
                     final View firstView = getChildAt(0);
-                    mMotionViewOriginalTop = firstView.getTop();
+                    mMotionViewOriginalLeft = firstView.getLeft();
 
                     // Don't fling more than 1 screen
-                    delta = Math.min(getHeight() - paddingBottom - paddingTop - 1, delta);
+                    delta = Math.min(getWidth() - paddingRight - paddingLeft - 1, delta);
                 } else {
                     // List is moving towards the bottom. Use last view as mMotionPosition
                     int offsetToLast = getChildCount() - 1;
                     mMotionPosition = mFirstPosition + offsetToLast;
 
                     final View lastView = getChildAt(offsetToLast);
-                    mMotionViewOriginalTop = lastView.getTop();
+                    mMotionViewOriginalLeft = lastView.getLeft();
 
                     // Don't fling more than 1 screen
-                    delta = Math.max(-(getHeight() - paddingBottom - paddingTop - 1), delta);
+                    delta = Math.max(-(getWidth() - paddingRight - paddingLeft - 1), delta);
                 }
 
                 // Check to see if we have bumped into the scroll limit
                 View motionView = getChildAt(mMotionPosition - mFirstPosition);
-                int oldTop = 0;
+                int oldLeft = 0;
                 if (motionView != null) {
-                    oldTop = motionView.getTop();
+                    oldLeft = motionView.getLeft();
                 }
 
                 // Don't stop just because delta is zero (it could have been rounded)
@@ -4119,10 +3978,10 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 if (atEnd) {
                     if (motionView != null) {
                         // Tweak the scroll for how far we overshot
-                        final int scrollY = getScrollY();
-                        int overshoot = -(delta - (motionView.getTop() - oldTop));
-                        overScrollBy(0, overshoot, 0, scrollY, 0, 0,
-                                0, mOverflingDistance, false);
+                        final int scrollX = getScrollX();
+                        int overshoot = -(delta - (motionView.getLeft() - oldLeft));
+                        overScrollBy(overshoot, 0, scrollX, 0, 0, 0,
+                                mOverflingDistance, 0, false);
                     }
                     if (more) {
                         edgeReached(delta);
@@ -4132,7 +3991,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
 
                 if (more && !atEnd) {
                     if (atEdge) invalidate();
-                    mLastFlingY = y;
+                    mLastFlingX = x;
                     ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
                 } else {
                     endFling();
@@ -4156,16 +4015,16 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             case TOUCH_MODE_OVERFLING: {
                 final OverScroller scroller = mScroller;
                 if (scroller.computeScrollOffset()) {
-                    final int scrollY = getScrollY();
-                    final int currY = scroller.getCurrY();
-                    final int deltaY = currY - scrollY;
-                    if (overScrollBy(0, deltaY, 0, scrollY, 0, 0,
-                            0, mOverflingDistance, false)) {
-                        final boolean crossDown = scrollY <= 0 && currY > 0;
-                        final boolean crossUp = scrollY >= 0 && currY < 0;
-                        if (crossDown || crossUp) {
+                    final int scrollX = getScrollX();
+                    final int currX = scroller.getCurrX();
+                    final int deltaX = currX - scrollX;
+                    if (overScrollBy(deltaX, 0, scrollX, 0, 0, 0,
+                            mOverflingDistance, 0, false)) {
+                        final boolean crossRight = scrollX <= 0 && currX > 0;
+                        final boolean crossLeft = scrollX >= 0 && currX < 0;
+                        if (crossRight || crossLeft) {
                             int velocity = (int) scroller.getCurrVelocity();
-                            if (crossUp) velocity = -velocity;
+                            if (crossLeft) velocity = -velocity;
 
                             // Don't flywheel from this; we're just continuing things.
                             scroller.abortAnimation();
@@ -4202,7 +4061,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         private int mScrollDuration;
         private final int mExtraScroll;
 
-        private int mOffsetFromTop;
+        private int mOffsetFromLeft;
 
         PositionScroller() {
             final Context context = getContext();
@@ -4358,10 +4217,10 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 return;
             }
 
-            offset += getPaddingTop();
+            offset += getPaddingLeft();
 
             mTargetPos = Math.max(0, Math.min(getCount() - 1, position));
-            mOffsetFromTop = offset;
+            mOffsetFromLeft = offset;
             mBoundPos = INVALID_POSITION;
             mLastSeenPos = INVALID_POSITION;
             mMode = MOVE_OFFSET;
@@ -4376,8 +4235,8 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 viewTravelCount = mTargetPos - lastPos;
             } else {
                 // On-screen, just scroll.
-                final int targetTop = getChildAt(mTargetPos - firstPos).getTop();
-                smoothScrollBy(targetTop - offset, duration, true);
+                final int targetLeft = getChildAt(mTargetPos - firstPos).getLeft();
+                smoothScrollBy(targetLeft - offset, duration, true);
                 return;
             }
 
@@ -4398,8 +4257,8 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             final int firstPos = mFirstPosition;
             final int childCount = getChildCount();
             final int lastPos = firstPos + childCount - 1;
-            final int paddedTop = mListPadding.top;
-            final int paddedBottom = getHeight() - mListPadding.bottom;
+            final int paddedLeft = mListPadding.left;
+            final int paddedRight = getWidth() - mListPadding.right;
 
             if (targetPos < firstPos || targetPos > lastPos) {
                 Log.w(TAG, "scrollToVisible called with targetPos " + targetPos +
@@ -4411,15 +4270,15 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             }
 
             final View targetChild = getChildAt(targetPos - firstPos);
-            final int targetTop = targetChild.getTop();
-            final int targetBottom = targetChild.getBottom();
+            final int targetLeft = targetChild.getLeft();
+            final int targetRight = targetChild.getRight();
             int scrollBy = 0;
 
-            if (targetBottom > paddedBottom) {
-                scrollBy = targetBottom - paddedBottom;
+            if (targetRight > paddedRight) {
+                scrollBy = targetRight - paddedRight;
             }
-            if (targetTop < paddedTop) {
-                scrollBy = targetTop - paddedTop;
+            if (targetLeft < paddedLeft) {
+                scrollBy = targetLeft - paddedLeft;
             }
 
             if (scrollBy == 0) {
@@ -4428,16 +4287,16 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
 
             if (boundPos >= 0) {
                 final View boundChild = getChildAt(boundPos - firstPos);
-                final int boundTop = boundChild.getTop();
-                final int boundBottom = boundChild.getBottom();
+                final int boundLeft = boundChild.getLeft();
+                final int boundRight = boundChild.getRight();
                 final int absScroll = Math.abs(scrollBy);
 
-                if (scrollBy < 0 && boundBottom + absScroll > paddedBottom) {
+                if (scrollBy < 0 && boundRight + absScroll > paddedRight) {
                     // Don't scroll the bound view off the bottom of the screen.
-                    scrollBy = Math.max(0, boundBottom - paddedBottom);
-                } else if (scrollBy > 0 && boundTop - absScroll < paddedTop) {
+                    scrollBy = Math.max(0, boundRight - paddedRight);
+                } else if (scrollBy > 0 && boundLeft - absScroll < paddedLeft) {
                     // Don't scroll the bound view off the top of the screen.
-                    scrollBy = Math.min(0, boundTop - paddedTop);
+                    scrollBy = Math.min(0, boundLeft - paddedLeft);
                 }
             }
 
@@ -4449,7 +4308,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         }
 
         public void run() {
-            final int listHeight = getHeight();
+            final int listWidth = getWidth();
             final int firstPos = mFirstPosition;
 
             switch (mMode) {
@@ -4468,13 +4327,13 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 }
 
                 final View lastView = getChildAt(lastViewIndex);
-                final int lastViewHeight = lastView.getHeight();
-                final int lastViewTop = lastView.getTop();
-                final int lastViewPixelsShowing = listHeight - lastViewTop;
+                final int lastViewWidth = lastView.getWidth();
+                final int lastViewLeft = lastView.getLeft();
+                final int lastViewPixelsShowing = listWidth - lastViewLeft;
                 final int extraScroll = lastPos < mItemCount - 1 ?
-                        Math.max(mListPadding.bottom, mExtraScroll) : mListPadding.bottom;
+                        Math.max(mListPadding.right, mExtraScroll) : mListPadding.right;
 
-                final int scrollBy = lastViewHeight - lastViewPixelsShowing + extraScroll;
+                final int scrollBy = lastViewWidth - lastViewPixelsShowing + extraScroll;
                 smoothScrollBy(scrollBy, mScrollDuration, true);
 
                 mLastSeenPos = lastPos;
@@ -4501,19 +4360,19 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 }
 
                 final View nextView = getChildAt(nextViewIndex);
-                final int nextViewHeight = nextView.getHeight();
-                final int nextViewTop = nextView.getTop();
-                final int extraScroll = Math.max(mListPadding.bottom, mExtraScroll);
+                final int nextViewWidth = nextView.getWidth();
+                final int nextViewLeft = nextView.getLeft();
+                final int extraScroll = Math.max(mListPadding.right, mExtraScroll);
                 if (nextPos < mBoundPos) {
-                    smoothScrollBy(Math.max(0, nextViewHeight + nextViewTop - extraScroll),
+                    smoothScrollBy(Math.max(0, nextViewWidth + nextViewLeft - extraScroll),
                             mScrollDuration, true);
 
                     mLastSeenPos = nextPos;
 
                     ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
                 } else  {
-                    if (nextViewTop > extraScroll) {
-                        smoothScrollBy(nextViewTop - extraScroll, mScrollDuration, true);
+                    if (nextViewLeft > extraScroll) {
+                        smoothScrollBy(nextViewLeft - extraScroll, mScrollDuration, true);
                     }
                 }
                 break;
@@ -4530,11 +4389,11 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 if (firstView == null) {
                     return;
                 }
-                final int firstViewTop = firstView.getTop();
+                final int firstViewLeft = firstView.getLeft();
                 final int extraScroll = firstPos > 0 ?
-                        Math.max(mExtraScroll, mListPadding.top) : mListPadding.top;
+                        Math.max(mExtraScroll, mListPadding.left) : mListPadding.left;
 
-                smoothScrollBy(firstViewTop - extraScroll, mScrollDuration, true);
+                smoothScrollBy(firstViewLeft - extraScroll, mScrollDuration, true);
 
                 mLastSeenPos = firstPos;
 
@@ -4558,19 +4417,19 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 }
 
                 final View lastView = getChildAt(lastViewIndex);
-                final int lastViewHeight = lastView.getHeight();
-                final int lastViewTop = lastView.getTop();
-                final int lastViewPixelsShowing = listHeight - lastViewTop;
-                final int extraScroll = Math.max(mListPadding.top, mExtraScroll);
+                final int lastViewWidth = lastView.getWidth();
+                final int lastViewLeft = lastView.getLeft();
+                final int lastViewPixelsShowing = listWidth - lastViewLeft;
+                final int extraScroll = Math.max(mListPadding.left, mExtraScroll);
                 mLastSeenPos = lastPos;
                 if (lastPos > mBoundPos) {
                     smoothScrollBy(-(lastViewPixelsShowing - extraScroll), mScrollDuration, true);
                     ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
                 } else {
-                    final int bottom = listHeight - extraScroll;
-                    final int lastViewBottom = lastViewTop + lastViewHeight;
-                    if (bottom > lastViewBottom) {
-                        smoothScrollBy(-(bottom - lastViewBottom), mScrollDuration, true);
+                    final int right = listWidth - extraScroll;
+                    final int lastViewRight = lastViewLeft + lastViewWidth;
+                    if (right > lastViewRight) {
+                        smoothScrollBy(-(right - lastViewRight), mScrollDuration, true);
                     }
                 }
                 break;
@@ -4601,21 +4460,21 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
 
                 final float modifier = Math.min(Math.abs(screenTravelCount), 1.f);
                 if (position < firstPos) {
-                    final int distance = (int) (-getHeight() * modifier);
+                    final int distance = (int) (-getWidth() * modifier);
                     final int duration = (int) (mScrollDuration * modifier);
                     smoothScrollBy(distance, duration, true);
                     ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
                 } else if (position > lastPos) {
-                    final int distance = (int) (getHeight() * modifier);
+                    final int distance = (int) (getWidth() * modifier);
                     final int duration = (int) (mScrollDuration * modifier);
                     smoothScrollBy(distance, duration, true);
                     ViewCompat.postOnAnimation(AbsHorizontalListView.this, this);
                 } else {
                     // On-screen, just scroll.
-                    final int targetTop = getChildAt(position - firstPos).getTop();
-                    final int distance = targetTop - mOffsetFromTop;
+                    final int targetLeft = getChildAt(position - firstPos).getLeft();
+                    final int distance = targetLeft - mOffsetFromLeft;
                     final int duration = (int) (mScrollDuration *
-                            ((float) Math.abs(distance) / getHeight()));
+                            ((float) Math.abs(distance) / getWidth()));
                     smoothScrollBy(distance, duration, true);
                 }
                 break;
@@ -4675,7 +4534,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
      *               of the view when scrolling is finished
      * @param duration Number of milliseconds to use for the scroll
      */
-    public void smoothScrollToPositionFromTop(int position, int offset, int duration) {
+    public void smoothScrollToPositionFromLeft(int position, int offset, int duration) {
         if (mPositionScroller == null) {
             mPositionScroller = new PositionScroller();
         }
@@ -4693,7 +4552,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
      * @param offset Desired distance in pixels of <code>position</code> from the top
      *               of the view when scrolling is finished
      */
-    public void smoothScrollToPositionFromTop(int position, int offset) {
+    public void smoothScrollToPositionFromLeft(int position, int offset) {
         if (mPositionScroller == null) {
             mPositionScroller = new PositionScroller();
         }
@@ -4734,13 +4593,13 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         final int firstPos = mFirstPosition;
         final int childCount = getChildCount();
         final int lastPos = firstPos + childCount;
-        final int topLimit = getPaddingTop();
-        final int bottomLimit = getHeight() - getPaddingBottom();
+        final int topLimit = getPaddingLeft();
+        final int bottomLimit = getWidth() - getPaddingRight();
 
         if (distance == 0 || mItemCount == 0 || childCount == 0 ||
-                (firstPos == 0 && getChildAt(0).getTop() == topLimit && distance < 0) ||
+                (firstPos == 0 && getChildAt(0).getLeft() == topLimit && distance < 0) ||
                 (lastPos == mItemCount &&
-                        getChildAt(childCount - 1).getBottom() == bottomLimit && distance > 0)) {
+                        getChildAt(childCount - 1).getRight() == bottomLimit && distance > 0)) {
             mFlingRunnable.endFling();
             if (mPositionScroller != null) {
                 mPositionScroller.stop();
@@ -4820,74 +4679,74 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
     /**
      * Track a motion scroll
      *
-     * @param deltaY Amount to offset mMotionView. This is the accumulated delta since the motion
+     * @param deltaX Amount to offset mMotionView. This is the accumulated delta since the motion
      *        began. Positive numbers mean the user's finger is moving down the screen.
-     * @param incrementalDeltaY Change in deltaY from the previous event.
+     * @param incrementalDeltaX Change in deltaX from the previous event.
      * @return true if we're already at the beginning/end of the list and have nothing to do.
      */
-    boolean trackMotionScroll(int deltaY, int incrementalDeltaY) {
+    boolean trackMotionScroll(int deltaX, int incrementalDeltaX) {
         final int childCount = getChildCount();
         if (childCount == 0) {
             return true;
         }
 
-        final int firstTop = getChildAt(0).getTop();
-        final int lastBottom = getChildAt(childCount - 1).getBottom();
+        final int firstLeft = getChildAt(0).getLeft();
+        final int lastRight = getChildAt(childCount - 1).getRight();
 
         final Rect listPadding = mListPadding;
 
         // "effective padding" In this case is the amount of padding that affects
         // how much space should not be filled by items. If we don't clip to padding
         // there is no effective padding.
-        int effectivePaddingTop = 0;
-        int effectivePaddingBottom = 0;
+        int effectivePaddingLeft = 0;
+        int effectivePaddingRight = 0;
         if (mClipToPadding) {
-            effectivePaddingTop = listPadding.top;
-            effectivePaddingBottom = listPadding.bottom;
+            effectivePaddingLeft = listPadding.left;
+            effectivePaddingRight = listPadding.right;
         }
 
          // FIXME account for grid vertical spacing too?
-        final int spaceAbove = effectivePaddingTop - firstTop;
-        final int end = getHeight() - effectivePaddingBottom;
-        final int spaceBelow = lastBottom - end;
+        final int spaceToLeft = effectivePaddingLeft - firstLeft;
+        final int end = getWidth() - effectivePaddingRight;
+        final int spaceToRight = lastRight - end;
 
-        final int height = getHeight() - getPaddingBottom() - getPaddingTop();
-        if (deltaY < 0) {
-            deltaY = Math.max(-(height - 1), deltaY);
+        final int width = getWidth() - getPaddingRight() - getPaddingLeft();
+        if (deltaX < 0) {
+            deltaX = Math.max(-(width - 1), deltaX);
         } else {
-            deltaY = Math.min(height - 1, deltaY);
+            deltaX = Math.min(width - 1, deltaX);
         }
 
-        if (incrementalDeltaY < 0) {
-            incrementalDeltaY = Math.max(-(height - 1), incrementalDeltaY);
+        if (incrementalDeltaX < 0) {
+            incrementalDeltaX = Math.max(-(width - 1), incrementalDeltaX);
         } else {
-            incrementalDeltaY = Math.min(height - 1, incrementalDeltaY);
+            incrementalDeltaX = Math.min(width - 1, incrementalDeltaX);
         }
 
         final int firstPosition = mFirstPosition;
 
         // Update our guesses for where the first and last views are
         if (firstPosition == 0) {
-            mFirstPositionDistanceGuess = firstTop - listPadding.top;
+            mFirstPositionDistanceGuess = firstLeft - listPadding.top;
         } else {
-            mFirstPositionDistanceGuess += incrementalDeltaY;
+            mFirstPositionDistanceGuess += incrementalDeltaX;
         }
         if (firstPosition + childCount == mItemCount) {
-            mLastPositionDistanceGuess = lastBottom + listPadding.bottom;
+            mLastPositionDistanceGuess = lastRight + listPadding.bottom;
         } else {
-            mLastPositionDistanceGuess += incrementalDeltaY;
+            mLastPositionDistanceGuess += incrementalDeltaX;
         }
 
-        final boolean cannotScrollDown = (firstPosition == 0 &&
-                firstTop >= listPadding.top && incrementalDeltaY >= 0);
-        final boolean cannotScrollUp = (firstPosition + childCount == mItemCount &&
-                lastBottom <= getHeight() - listPadding.bottom && incrementalDeltaY <= 0);
+        final boolean cannotScrollRight = (firstPosition == 0 &&
+                firstLeft >= listPadding.left && incrementalDeltaX >= 0);
+        final boolean cannotScrollLeft = (firstPosition + childCount == mItemCount &&
+                lastRight <= getWidth() - listPadding.right && incrementalDeltaX <= 0);
 
-        if (cannotScrollDown || cannotScrollUp) {
-            return incrementalDeltaY != 0;
+        if (cannotScrollRight || cannotScrollLeft) {
+            return incrementalDeltaX != 0;
         }
 
-        final boolean down = incrementalDeltaY < 0;
+        final boolean toRight = incrementalDeltaX < 0;
 
         final boolean inTouchMode = isInTouchMode();
         if (inTouchMode) {
@@ -4900,14 +4759,14 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         int start = 0;
         int count = 0;
 
-        if (down) {
-            int top = -incrementalDeltaY;
+        if (toRight) {
+            int left = -incrementalDeltaX;
             if (mClipToPadding) {
-                top += listPadding.top;
+                left += listPadding.left;
             }
             for (int i = 0; i < childCount; i++) {
                 final View child = getChildAt(i);
-                if (child.getBottom() >= top) {
+                if (child.getRight() >= left) {
                     break;
                 } else {
                     count++;
@@ -4918,13 +4777,13 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 }
             }
         } else {
-            int bottom = getHeight() - incrementalDeltaY;
+            int right = getWidth() - incrementalDeltaX;
             if (mClipToPadding) {
-                bottom -= listPadding.bottom;
+                right -= listPadding.right;
             }
             for (int i = childCount - 1; i >= 0; i--) {
                 final View child = getChildAt(i);
-                if (child.getTop() <= bottom) {
+                if (child.getLeft() <= right) {
                     break;
                 } else {
                     start = i;
@@ -4937,7 +4796,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             }
         }
 
-        mMotionViewNewTop = mMotionViewOriginalTop + deltaY;
+        mMotionViewNewLeft = mMotionViewOriginalLeft + deltaX;
 
         mBlockLayoutRequests = true;
 
@@ -4952,15 +4811,15 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
            invalidate();
         }
 
-        offsetChildrenTopAndBottomUnhide(incrementalDeltaY);
+        offsetChildrenLeftAndRightUnhide(incrementalDeltaX);
 
-        if (down) {
+        if (toRight) {
             mFirstPosition += count;
         }
 
-        final int absIncrementalDeltaY = Math.abs(incrementalDeltaY);
-        if (spaceAbove < absIncrementalDeltaY || spaceBelow < absIncrementalDeltaY) {
-            fillGap(down);
+        final int absIncrementalDeltaX = Math.abs(incrementalDeltaX);
+        if (spaceToLeft < absIncrementalDeltaX || spaceToRight < absIncrementalDeltaX) {
+            fillGap(toRight);
         }
 
         if (!inTouchMode && mSelectedPosition != INVALID_POSITION) {
@@ -5010,9 +4869,9 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
      * method is to fill the gap thus created by performing a partial layout in the
      * empty space.
      *
-     * @param down true if the scroll is going down, false if it is going up
+     * @param toRight true if the scroll is going toRight, false if it is going up
      */
-    abstract void fillGap(boolean down);
+    abstract void fillGap(boolean toRight);
 
     void hideSelector() {
         if (mSelectedPosition != INVALID_POSITION) {
@@ -5024,7 +4883,7 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             }
             setSelectedPositionInt(INVALID_POSITION);
             setNextSelectedPositionInt(INVALID_POSITION);
-            mSelectedTop = 0;
+            mSelectedLeft = 0;
         }
     }
 
@@ -5044,26 +4903,26 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
     }
 
     /**
-     * Find the row closest to y. This row will be used as the motion row when scrolling
+     * Find the row closest to x. This row will be used as the motion row when scrolling
      *
-     * @param y Where the user touched
+     * @param x Where the user touched
      * @return The position of the first (or only) item in the row containing y
      */
-    abstract int findMotionRow(int y);
+    abstract int findMotionCol(int x);
 
     /**
-     * Find the row closest to y. This row will be used as the motion row when scrolling.
+     * Find the row closest to x. This row will be used as the motion row when scrolling.
      *
-     * @param y Where the user touched
-     * @return The position of the first (or only) item in the row closest to y
+     * @param x Where the user touched
+     * @return The position of the first (or only) item in the row closest to x
      */
-    int findClosestMotionRow(int y) {
+    int findClosestMotionCol(int x) {
         final int childCount = getChildCount();
         if (childCount == 0) {
             return INVALID_POSITION;
         }
 
-        final int motionRow = findMotionRow(y);
+        final int motionRow = findMotionCol(x);
         return motionRow != INVALID_POSITION ? motionRow : mFirstPosition + childCount - 1;
     }
 
@@ -5108,27 +4967,27 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             return false;
         }
 
-        int selectedTop = 0;
+        int selectedLeft = 0;
         int selectedPos;
-        int childrenTop = mListPadding.top;
-        int childrenBottom = getBottom() - getTop() - mListPadding.bottom;
+        int childrenLeft = mListPadding.left;
+        int childrenRight = getRight() - getLeft() - mListPadding.right;
         final int firstPosition = mFirstPosition;
         final int toPosition = mResurrectToPosition;
-        boolean down = true;
+        boolean toRight = true;
 
         if (toPosition >= firstPosition && toPosition < firstPosition + childCount) {
             selectedPos = toPosition;
 
             final View selected = getChildAt(selectedPos - mFirstPosition);
-            selectedTop = selected.getTop();
-            int selectedBottom = selected.getBottom();
+            selectedLeft = selected.getLeft();
+            int selectedRight = selected.getRight();
 
             // We are scrolled, don't get in the fade
-            if (selectedTop < childrenTop) {
-                selectedTop = childrenTop + getVerticalFadingEdgeLength();
-            } else if (selectedBottom > childrenBottom) {
-                selectedTop = childrenBottom - selected.getMeasuredHeight()
-                        - getVerticalFadingEdgeLength();
+            if (selectedLeft < childrenLeft) {
+                selectedLeft = childrenLeft + getHorizontalFadingEdgeLength();
+            } else if (selectedRight > childrenRight) {
+                selectedLeft = childrenRight - selected.getMeasuredWidth()
+                        - getHorizontalFadingEdgeLength();
             }
         } else {
             if (toPosition < firstPosition) {
@@ -5136,45 +4995,45 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 selectedPos = firstPosition;
                 for (int i = 0; i < childCount; i++) {
                     final View v = getChildAt(i);
-                    final int top = v.getTop();
+                    final int left = v.getLeft();
 
                     if (i == 0) {
                         // Remember the position of the first item
-                        selectedTop = top;
+                        selectedLeft = left;
                         // See if we are scrolled at all
-                        if (firstPosition > 0 || top < childrenTop) {
+                        if (firstPosition > 0 || left < childrenLeft) {
                             // If we are scrolled, don't select anything that is
                             // in the fade region
-                            childrenTop += getVerticalFadingEdgeLength();
+                            childrenLeft += getHorizontalFadingEdgeLength();
                         }
                     }
-                    if (top >= childrenTop) {
-                        // Found a view whose top is fully visisble
+                    if (left >= childrenLeft) {
+                        // Found a view whose left is fully visisble
                         selectedPos = firstPosition + i;
-                        selectedTop = top;
+                        selectedLeft = left;
                         break;
                     }
                 }
             } else {
                 final int itemCount = mItemCount;
-                down = false;
+                toRight = false;
                 selectedPos = firstPosition + childCount - 1;
 
                 for (int i = childCount - 1; i >= 0; i--) {
                     final View v = getChildAt(i);
-                    final int top = v.getTop();
-                    final int bottom = v.getBottom();
+                    final int left = v.getLeft();
+                    final int right = v.getRight();
 
                     if (i == childCount - 1) {
-                        selectedTop = top;
-                        if (firstPosition + childCount < itemCount || bottom > childrenBottom) {
-                            childrenBottom -= getVerticalFadingEdgeLength();
+                        selectedLeft = left;
+                        if (firstPosition + childCount < itemCount || right > childrenRight) {
+                            childrenRight -= getHorizontalFadingEdgeLength();
                         }
                     }
 
-                    if (bottom <= childrenBottom) {
+                    if (right <= childrenRight) {
                         selectedPos = firstPosition + i;
-                        selectedTop = top;
+                        selectedLeft = left;
                         break;
                     }
                 }
@@ -5188,8 +5047,8 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         }
         mTouchMode = TOUCH_MODE_REST;
         clearScrollingCache();
-        mSpecificTop = selectedTop;
-        selectedPos = lookForSelectablePosition(selectedPos, down);
+        mSpecificLeft = selectedLeft;
+        selectedPos = lookForSelectablePosition(selectedPos, toRight);
         if (selectedPos >= firstPosition && selectedPos <= getLastVisiblePosition()) {
             mLayoutMode = LAYOUT_SPECIFIC;
             updateSelectorState();
@@ -5272,21 +5131,21 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 mPendingSync = null;
 
                 if (mTranscriptMode == TRANSCRIPT_MODE_ALWAYS_SCROLL) {
-                    mLayoutMode = LAYOUT_FORCE_BOTTOM;
+                    mLayoutMode = LAYOUT_FORCE_RIGHT;
                     return;
                 } else if (mTranscriptMode == TRANSCRIPT_MODE_NORMAL) {
                     if (mForceTranscriptScroll) {
                         mForceTranscriptScroll = false;
-                        mLayoutMode = LAYOUT_FORCE_BOTTOM;
+                        mLayoutMode = LAYOUT_FORCE_RIGHT;
                         return;
                     }
                     final int childCount = getChildCount();
-                    final int listBottom = getHeight() - getPaddingBottom();
+                    final int listRight = getWidth() - getPaddingRight();
                     final View lastChild = getChildAt(childCount - 1);
-                    final int lastBottom = lastChild != null ? lastChild.getBottom() : listBottom;
+                    final int lastRight = lastChild != null ? lastChild.getRight() : listRight;
                     if (mFirstPosition + childCount >= lastHandledItemCount &&
-                            lastBottom <= listBottom) {
-                        mLayoutMode = LAYOUT_FORCE_BOTTOM;
+                            lastRight <= listRight) {
+                        mLayoutMode = LAYOUT_FORCE_RIGHT;
                         return;
                     }
                     // Something new came in and we didn't scroll; give the user a clue that
@@ -5316,12 +5175,12 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                                 // Same row id is selected
                                 mSyncPosition = newPos;
 
-                                if (mSyncHeight == getHeight()) {
-                                    // If we are at the same height as when we saved state, try
+                                if (mSyncWidth == getWidth()) {
+                                    // If we are at the same width as when we saved state, try
                                     // to restore the scroll position too.
                                     mLayoutMode = LAYOUT_SYNC;
                                 } else {
-                                    // We are not the same height as when the selection was saved, so
+                                    // We are not the same width as when the selection was saved, so
                                     // don't try to restore the exact position
                                     mLayoutMode = LAYOUT_SET_SELECTION;
                                 }
@@ -5379,11 +5238,11 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         }
 
         // Nothing is selected. Give up and reset everything.
-        mLayoutMode = mStackFromBottom ? LAYOUT_FORCE_BOTTOM : LAYOUT_FORCE_TOP;
+        mLayoutMode = mStackFromRight ? LAYOUT_FORCE_RIGHT : LAYOUT_FORCE_LEFT;
         mSelectedPosition = INVALID_POSITION;
-        mSelectedRowId = INVALID_ROW_ID;
+        mSelectedColId = INVALID_COL_ID;
         mNextSelectedPosition = INVALID_POSITION;
-        mNextSelectedRowId = INVALID_ROW_ID;
+        mNextSelectedColId = INVALID_COL_ID;
         mNeedSync = false;
         mPendingSync = null;
         mSelectorPosition = INVALID_POSITION;
@@ -5445,6 +5304,8 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         }
     }
 
+
+    // FIXME this is place that i get (j.m.)
     /**
      * What is the distance between the source and destination rectangles given the direction of
      * focus navigation between them? The direction basically helps figure out more quickly what is
@@ -5866,7 +5727,9 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
             // Don't reclaim header or footer views, or views that should be ignored
             if (lp != null && mRecycler.shouldRecycleViewType(lp.viewType)) {
                 views.add(child);
-                ViewCompat.setAccessibilityDelegate(child, null);
+
+                // TODO fix this (j.m.)
+//                ViewCompat.setAccessibilityDelegate(child, null);
                 if (listener != null) {
                     // Pretend they went through the scrap heap
                     listener.onMovedToScrapHeap(child);
@@ -5878,9 +5741,9 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
     }
 
     private void finishGlows() {
-        if (mEdgeGlowTop != null) {
-            mEdgeGlowTop.finish();
-            mEdgeGlowBottom.finish();
+        if (mEdgeGlowLeft != null) {
+            mEdgeGlowLeft.finish();
+            mEdgeGlowRight.finish();
         }
     }
 
@@ -5907,21 +5770,15 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
         mRecycler.mRecyclerListener = listener;
     }
 
-    class AdapterDataSetObserver extends AdapterView<ListAdapter>.AdapterDataSetObserver {
+    class AdapterDataSetObserver extends HorizontalAdapterView<ListAdapter>.AdapterDataSetObserver {
         @Override
         public void onChanged() {
             super.onChanged();
-            if (mFastScroller != null) {
-                mFastScroller.onSectionsChanged();
-            }
         }
 
         @Override
         public void onInvalidated() {
             super.onInvalidated();
-            if (mFastScroller != null) {
-                mFastScroller.onSectionsChanged();
-            }
         }
     }
 
@@ -6314,7 +6171,9 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                 mScrapViews[viewType].add(scrap);
             }
 
-            ViewCompat.setAccessibilityDelegate(scrap, null);
+            checkNotNull(scrap);
+            // TODO fix this (j.m.)
+//            ViewCompat.setAccessibilityDelegate(scrap, null);
             if (mRecyclerListener != null) {
                 mRecyclerListener.onMovedToScrapHeap(scrap);
             }
@@ -6376,7 +6235,8 @@ public abstract class AbsHorizontalListView extends SuperListView implements Tex
                     lp.scrappedFromPosition = mFirstActivePosition + i;
                     scrapViews.add(victim);
 
-                    ViewCompat.setAccessibilityDelegate(victim, null);
+                    // TODO fix this (j.m.)
+//                    ViewCompat.setAccessibilityDelegate(victim, null);
                     if (hasListener) {
                         mRecyclerListener.onMovedToScrapHeap(victim);
                     }

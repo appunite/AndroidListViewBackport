@@ -32,10 +32,11 @@ public class MainActivity extends SherlockActivity {
         }
         ListAdapter adapter = new SimpleAdapter(this,
                 data,
-                android.R.layout.simple_list_item_1,
+                R.layout.horizontal_simple_list_item,
                 new String[] {PROJECTION_NAME},
                 new int[] {android.R.id.text1});
         listView.setAdapter(adapter);
-        listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+        // Currently not working
+//        listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
     }
 }

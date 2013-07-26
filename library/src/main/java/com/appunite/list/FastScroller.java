@@ -96,7 +96,7 @@ class FastScroller {
     private RectF mOverlayPos;
     private int mOverlaySize;
 
-    SuperListView mList;
+    AbsListView mList;
     boolean mScrollCompleted;
     private int mVisibleItem;
     private Paint mPaint;
@@ -156,7 +156,7 @@ class FastScroller {
         }
     };
 
-    public FastScroller(Context context, SuperListView listView) {
+    public FastScroller(Context context, AbsListView listView) {
         mList = listView;
         init(context);
     }
@@ -601,7 +601,7 @@ class FastScroller {
             // FIXME we do not use ExpandableListView (j.m.)
 //            if (mList instanceof ExpandableListView) {
 //                ExpandableListView expList = (ExpandableListView) mList;
-//                expList.setSelectionFromTop(expList.getFlatListPosition(
+//                expList.setSelectionFromLeft(expList.getFlatListPosition(
 //                        ExpandableListView.getPackedPositionForGroup(index + mListOffset)), 0);
 //            } else
             if (mList instanceof ListView) {
@@ -617,7 +617,7 @@ class FastScroller {
             // FIXME usless because we do not create ExpandableListView (j.m.)
 //            if (mList instanceof ExpandableListView) {
 //                ExpandableListView expList = (ExpandableListView) mList;
-//                expList.setSelectionFromTop(expList.getFlatListPosition(
+//                expList.setSelectionFromLeft(expList.getFlatListPosition(
 //                        ExpandableListView.getPackedPositionForGroup(index + mListOffset)), 0);
 //            } else
             if (mList instanceof ListView) {

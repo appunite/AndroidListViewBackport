@@ -76,7 +76,7 @@ public class ListView extends AbsListView {
 
     /**
      * When arrow scrolling, ListView will never scroll more than this factor
-     * times the height of the list.
+     * times the width of the list.
      */
     private static final float MAX_SCROLL_FACTOR = 0.33f;
 
@@ -153,7 +153,7 @@ public class ListView extends AbsListView {
 
         final Drawable d = a.getDrawable(R.styleable.ListView_divider);
         if (d != null) {
-            // If a divider is specified use its intrinsic height for divider height
+            // If a divider is specified use its intrinsic width for divider width
             setDivider(d);
         }
         
@@ -169,7 +169,7 @@ public class ListView extends AbsListView {
             setOverscrollFooter(osFooter);
         }
 
-        // Use the height specified, zero being the default
+        // Use the width specified, zero being the default
         final int dividerHeight = a.getDimensionPixelSize(
                 R.styleable.ListView_dividerHeight, 0);
         if (dividerHeight != 0) {
@@ -969,7 +969,7 @@ public class ListView extends AbsListView {
                 // Find space required to bring the bottom of the selected item fully into view
                 int spaceBelow = sel.getBottom() - bottomSelectionPixel;
 
-                // Don't scroll more than half the height of the list
+                // Don't scroll more than half the width of the list
                 int halfVerticalSpace = (childrenBottom - childrenTop) / 2;
                 int offset = Math.min(spaceAbove, spaceBelow);
                 offset = Math.min(offset, halfVerticalSpace);
@@ -1030,7 +1030,7 @@ public class ListView extends AbsListView {
                // Find space available below the selection into which we can scroll downwards
                 int spaceBelow = bottomSelectionPixel - sel.getBottom();
 
-                // Don't scroll more than half the height of the list
+                // Don't scroll more than half the width of the list
                 int halfVerticalSpace = (childrenBottom - childrenTop) / 2;
                 int offset = Math.min(spaceAbove, spaceBelow);
                 offset = Math.min(offset, halfVerticalSpace);
@@ -1185,10 +1185,10 @@ public class ListView extends AbsListView {
     }
 
     /**
-     * Measures the height of the given range of children (inclusive) and
-     * returns the height with this ListView's padding and divider heights
+     * Measures the width of the given range of children (inclusive) and
+     * returns the width with this ListView's padding and divider heights
      * included. If maxHeight is provided, the measuring will stop when the
-     * current height reaches maxHeight.
+     * current width reaches maxHeight.
      *
      * @param widthMeasureSpec The width measure spec to be given to a child's
      *            {@link View#measure(int, int)}.
@@ -1196,11 +1196,11 @@ public class ListView extends AbsListView {
      * @param endPosition The (inclusive) position of the last child to be
      *            shown. Specify {@link #NO_POSITION} if the last child should be
      *            the last available child from the adapter.
-     * @param maxHeight The maximum height that will be returned (if all the
+     * @param maxHeight The maximum width that will be returned (if all the
      *            children don't fit in this value, this value will be
      *            returned).
      * @param disallowPartialChildPosition In general, whether the returned
-     *            height should only contain entire children. This is more
+     *            width should only contain entire children. This is more
      *            powerful--it is the first inclusive position at which partial
      *            children will not be allowed. Example: it looks nice to have
      *            at least 3 completely visible children, and in portrait this
@@ -1208,7 +1208,7 @@ public class ListView extends AbsListView {
      *            when even 2 children can not be completely shown, so a value
      *            of 2 (remember, inclusive) would be good (assuming
      *            startPosition is 0).
-     * @return The height of this ListView with the given children.
+     * @return The width of this ListView with the given children.
      */
     final int measureHeightOfChildren(int widthMeasureSpec, int startPosition, int endPosition,
             final int maxHeight, int disallowPartialChildPosition) {
@@ -1221,7 +1221,7 @@ public class ListView extends AbsListView {
         // Include the padding of the list
         int returnedHeight = mListPadding.top + mListPadding.bottom;
         final int dividerHeight = ((mDividerHeight > 0) && mDivider != null) ? mDividerHeight : 0;
-        // The previous height value that was less than maxHeight and contained
+        // The previous width value that was less than maxHeight and contained
         // no partial children
         int prevHeightWithoutPartialChild = 0;
         int i;
@@ -1252,11 +1252,11 @@ public class ListView extends AbsListView {
             returnedHeight += child.getMeasuredHeight();
 
             if (returnedHeight >= maxHeight) {
-                // We went over, figure out which height to return.  If returnedHeight > maxHeight,
+                // We went over, figure out which width to return.  If returnedHeight > maxHeight,
                 // then the i'th position did not fit completely.
                 return (disallowPartialChildPosition >= 0) // Disallowing is enabled (> -1)
                             && (i > disallowPartialChildPosition) // We've past the min pos
-                            && (prevHeightWithoutPartialChild > 0) // We have a prev height
+                            && (prevHeightWithoutPartialChild > 0) // We have a prev width
                             && (returnedHeight != maxHeight) // i'th child did not fit completely
                         ? prevHeightWithoutPartialChild
                         : maxHeight;
@@ -2551,7 +2551,7 @@ public class ListView extends AbsListView {
     }
 
     /**
-     * Re-measure a child, and if its height changes, lay it out preserving its
+     * Re-measure a child, and if its width changes, lay it out preserving its
      * top, and adjust the children below it appropriately.
      * @param child The child
      * @param childIndex The view group index of the child.
@@ -3324,7 +3324,7 @@ public class ListView extends AbsListView {
 
     /**
      * Sets the drawable that will be drawn between each item in the list. If the drawable does
-     * not have an intrinsic height, you should also call {@link #setDividerHeight(int)}
+     * not have an intrinsic width, you should also call {@link #setDividerHeight(int)}
      *
      * @param divider The drawable to use.
      */
@@ -3341,17 +3341,17 @@ public class ListView extends AbsListView {
     }
 
     /**
-     * @return Returns the height of the divider that will be drawn between each item in the list.
+     * @return Returns the width of the divider that will be drawn between each item in the list.
      */
     public int getDividerHeight() {
         return mDividerHeight;
     }
     
     /**
-     * Sets the height of the divider that will be drawn between each item in the list. Calling
-     * this will override the intrinsic height as set by {@link #setDivider(Drawable)}
+     * Sets the width of the divider that will be drawn between each item in the list. Calling
+     * this will override the intrinsic width as set by {@link #setDivider(Drawable)}
      *
-     * @param height The new height of the divider in pixels.
+     * @param height The new width of the divider in pixels.
      */
     public void setDividerHeight(int height) {
         mDividerHeight = height;

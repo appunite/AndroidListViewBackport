@@ -76,7 +76,7 @@ public class HorizontalListView extends AbsHorizontalListView {
 
     /**
      * When arrow scrolling, ListView will never scroll more than this factor
-     * times the height of the list.
+     * times the width of the list.
      */
     private static final float MAX_SCROLL_FACTOR = 0.33f;
 
@@ -91,7 +91,7 @@ public class HorizontalListView extends AbsHorizontalListView {
     private ArrayList<ListView.FixedViewInfo> mFooterViewInfos = Lists.newArrayList();
 
     Drawable mDivider;
-    int mDividerHeight;
+    int mDividerWidth;
 
     Drawable mOverScrollHeader;
     Drawable mOverScrollFooter;
@@ -140,7 +140,7 @@ public class HorizontalListView extends AbsHorizontalListView {
 
         final Drawable d = a.getDrawable(R.styleable.ListView_divider);
         if (d != null) {
-            // If a divider is specified use its intrinsic height for divider height
+            // If a divider is specified use its intrinsic width for divider width
             setDivider(d);
         }
 
@@ -156,11 +156,11 @@ public class HorizontalListView extends AbsHorizontalListView {
             setOverscrollFooter(osFooter);
         }
 
-        // Use the height specified, zero being the default
+        // Use the width specified, zero being the default
         final int dividerHeight = a.getDimensionPixelSize(
                 R.styleable.ListView_dividerHeight, 0);
         if (dividerHeight != 0) {
-            setDividerHeight(dividerHeight);
+            setDividerWidth(dividerHeight);
         }
 
         mHeaderDividersEnabled = a.getBoolean(R.styleable.ListView_headerDividersEnabled, true);
@@ -174,29 +174,29 @@ public class HorizontalListView extends AbsHorizontalListView {
      *   an arrow event.
      */
     public int getMaxScrollAmount() {
-        return (int) (MAX_SCROLL_FACTOR * (getBottom() - getTop()));
+        return (int) (MAX_SCROLL_FACTOR * (getRight() - getLeft()));
     }
 
     /**
      * Make sure views are touching the top or bottom edge, as appropriate for
      * our gravity
      */
-    private void adjustViewsUpOrDown() {
+    private void adjustViewsLeftOrRight() {
         final int childCount = getChildCount();
         int delta;
 
         if (childCount > 0) {
             View child;
 
-            if (!mStackFromBottom) {
+            if (!mStackFromRight) {
                 // Uh-oh -- we came up short. Slide all views up to make them
                 // align with the top
                 child = getChildAt(0);
-                delta = child.getTop() - mListPadding.top;
+                delta = child.getLeft() - mListPadding.left;
                 if (mFirstPosition != 0) {
                     // It's OK to have some space above the first item if it is
                     // part of the vertical spacing
-                    delta -= mDividerHeight;
+                    delta -= mDividerWidth;
                 }
                 if (delta < 0) {
                     // We only are looking to see if we are too low, not too high
@@ -205,12 +205,12 @@ public class HorizontalListView extends AbsHorizontalListView {
             } else {
                 // we are too high, slide all views down to align with bottom
                 child = getChildAt(childCount - 1);
-                delta = child.getBottom() - (getHeight() - mListPadding.bottom);
+                delta = child.getRight() - (getWidth() - mListPadding.right);
 
                 if (mFirstPosition + childCount < mItemCount) {
                     // It's OK to have some space below the last item if it is
                     // part of the vertical spacing
-                    delta += mDividerHeight;
+                    delta += mDividerWidth;
                 }
 
                 if (delta > 0) {
@@ -219,7 +219,7 @@ public class HorizontalListView extends AbsHorizontalListView {
             }
 
             if (delta != 0) {
-                offsetChildrenTopAndBottomUnhide(-delta);
+                offsetChildrenLeftAndRightUnhide(-delta);
             }
         }
     }
@@ -427,7 +427,7 @@ public class HorizontalListView extends AbsHorizontalListView {
         }
 
         mOldSelectedPosition = INVALID_POSITION;
-        mOldSelectedRowId = INVALID_ROW_ID;
+        mOldSelectedColId = INVALID_COL_ID;
 
         // AbsListView#setAdapter will update choice mode states.
         super.setAdapter(adapter);
@@ -444,7 +444,7 @@ public class HorizontalListView extends AbsHorizontalListView {
             mRecycler.setViewTypeCount(mAdapter.getViewTypeCount());
 
             int position;
-            if (mStackFromBottom) {
+            if (mStackFromRight) {
                 position = lookForSelectablePosition(mItemCount - 1, false);
             } else {
                 position = lookForSelectablePosition(0, true);
@@ -499,23 +499,23 @@ public class HorizontalListView extends AbsHorizontalListView {
     /**
      * @return Whether the list needs to show the top fading edge
      */
-    private boolean showingTopFadingEdge() {
-        final int listTop = getScrollY() + mListPadding.top;
-        return (mFirstPosition > 0) || (getChildAt(0).getTop() > listTop);
+    private boolean showingLeftFadingEdge() {
+        final int listLeft = getScrollX() + mListPadding.left;
+        return (mFirstPosition > 0) || (getChildAt(0).getLeft() > listLeft);
     }
 
     /**
      * @return Whether the list needs to show the bottom fading edge
      */
-    private boolean showingBottomFadingEdge() {
+    private boolean showingRightFadingEdge() {
         final int childCount = getChildCount();
-        final int bottomOfBottomChild = getChildAt(childCount - 1).getBottom();
+        final int bottomOfRightChild = getChildAt(childCount - 1).getRight();
         final int lastVisiblePosition = mFirstPosition + childCount - 1;
 
-        final int listBottom = getScrollY() + getHeight() - mListPadding.bottom;
+        final int listRight = getScrollX() + getWidth() - mListPadding.right;
 
         return (lastVisiblePosition < mItemCount - 1)
-                         || (bottomOfBottomChild < listBottom);
+                         || (bottomOfRightChild < listRight);
     }
 
 
@@ -528,71 +528,71 @@ public class HorizontalListView extends AbsHorizontalListView {
         rect.offset(child.getLeft(), child.getTop());
         rect.offset(-child.getScrollX(), -child.getScrollY());
 
-        final int height = getHeight();
-        int listUnfadedTop = getScrollY();
-        int listUnfadedBottom = listUnfadedTop + height;
-        final int fadingEdge = getVerticalFadingEdgeLength();
+        final int width = getWidth();
+        int listUnfadedLeft = getScrollX();
+        int listUnfadedRight = listUnfadedLeft + width;
+        final int fadingEdge = getHorizontalFadingEdgeLength();
 
-        if (showingTopFadingEdge()) {
+        if (showingLeftFadingEdge()) {
             // leave room for top fading edge as long as rect isn't at very top
             if ((mSelectedPosition > 0) || (rectTopWithinChild > fadingEdge)) {
-                listUnfadedTop += fadingEdge;
+                listUnfadedLeft += fadingEdge;
             }
         }
 
         int childCount = getChildCount();
-        int bottomOfBottomChild = getChildAt(childCount - 1).getBottom();
+        int rightOfRightChild = getChildAt(childCount - 1).getRight();
 
-        if (showingBottomFadingEdge()) {
+        if (showingRightFadingEdge()) {
             // leave room for bottom fading edge as long as rect isn't at very bottom
             if ((mSelectedPosition < mItemCount - 1)
-                    || (rect.bottom < (bottomOfBottomChild - fadingEdge))) {
-                listUnfadedBottom -= fadingEdge;
+                    || (rect.bottom < (rightOfRightChild - fadingEdge))) {
+                listUnfadedRight -= fadingEdge;
             }
         }
 
-        int scrollYDelta = 0;
+        int scrollXDelta = 0;
 
-        if (rect.bottom > listUnfadedBottom && rect.top > listUnfadedTop) {
+        if (rect.right > listUnfadedRight && rect.left > listUnfadedLeft) {
             // need to MOVE DOWN to get it in view: move down just enough so
             // that the entire rectangle is in view (or at least the first
             // screen size chunk).
 
-            if (rect.height() > height) {
+            if (rect.width() > width) {
                 // just enough to get screen size chunk on
-                scrollYDelta += (rect.top - listUnfadedTop);
+                scrollXDelta += (rect.left - listUnfadedLeft);
             } else {
                 // get entire rect at bottom of screen
-                scrollYDelta += (rect.bottom - listUnfadedBottom);
+                scrollXDelta += (rect.right - listUnfadedRight);
             }
 
             // make sure we aren't scrolling beyond the end of our children
-            int distanceToBottom = bottomOfBottomChild - listUnfadedBottom;
-            scrollYDelta = Math.min(scrollYDelta, distanceToBottom);
-        } else if (rect.top < listUnfadedTop && rect.bottom < listUnfadedBottom) {
+            int distanceToRight = rightOfRightChild - listUnfadedRight;
+            scrollXDelta = Math.min(scrollXDelta, distanceToRight);
+        } else if (rect.left < listUnfadedLeft && rect.right < listUnfadedRight) {
             // need to MOVE UP to get it in view: move up just enough so that
             // entire rectangle is in view (or at least the first screen
             // size chunk of it).
 
-            if (rect.height() > height) {
+            if (rect.width() > width) {
                 // screen size chunk
-                scrollYDelta -= (listUnfadedBottom - rect.bottom);
+                scrollXDelta -= (listUnfadedRight - rect.right);
             } else {
                 // entire rect at top
-                scrollYDelta -= (listUnfadedTop - rect.top);
+                scrollXDelta -= (listUnfadedLeft - rect.left);
             }
 
             // make sure we aren't scrolling any further than the top our children
-            int top = getChildAt(0).getTop();
-            int deltaToTop = top - listUnfadedTop;
-            scrollYDelta = Math.max(scrollYDelta, deltaToTop);
+            int left = getChildAt(0).getLeft();
+            int deltaToTop = left - listUnfadedLeft;
+            scrollXDelta = Math.max(scrollXDelta, deltaToTop);
         }
 
-        final boolean scroll = scrollYDelta != 0;
+        final boolean scroll = scrollXDelta != 0;
         if (scroll) {
-            scrollListItemsBy(-scrollYDelta);
+            scrollListItemsBy(-scrollXDelta);
             positionSelector(INVALID_POSITION, child);
-            mSelectedTop = child.getTop();
+            mSelectedLeft = child.getLeft();
             invalidate();
         }
         return scroll;
@@ -602,25 +602,25 @@ public class HorizontalListView extends AbsHorizontalListView {
      * {@inheritDoc}
      */
     @Override
-    void fillGap(boolean down) {
+    void fillGap(boolean toRight) {
         final int count = getChildCount();
-        if (down) {
-            int paddingTop = 0;
+        if (toRight) {
+            int paddingLeft = 0;
             if (mClipToPadding) {
-                paddingTop = getListPaddingTop();
+                paddingLeft = getListPaddingLeft();
             }
-            final int startOffset = count > 0 ? getChildAt(count - 1).getBottom() + mDividerHeight :
-                    paddingTop;
-            fillDown(mFirstPosition + count, startOffset);
+            final int startOffset = count > 0 ? getChildAt(count - 1).getRight() + mDividerWidth :
+                    paddingLeft;
+            fillRight(mFirstPosition + count, startOffset);
             correctTooHigh(getChildCount());
         } else {
-            int paddingBottom = 0;
+            int paddingRight = 0;
             if (mClipToPadding) {
-                paddingBottom = getListPaddingBottom();
+                paddingRight = getListPaddingRight();
             }
-            final int startOffset = count > 0 ? getChildAt(0).getTop() - mDividerHeight :
-                    getHeight() - paddingBottom;
-            fillUp(mFirstPosition - 1, startOffset);
+            final int startOffset = count > 0 ? getChildAt(0).getLeft() - mDividerWidth :
+                    getWidth() - paddingRight;
+            fillLeft(mFirstPosition - 1, startOffset);
             correctTooLow(getChildCount());
         }
     }
@@ -630,26 +630,26 @@ public class HorizontalListView extends AbsHorizontalListView {
      *
      * @param pos The first position to put in the list
      *
-     * @param nextTop The location where the top of the item associated with pos
+     * @param nextLeft The location where the top of the item associated with pos
      *        should be drawn
      *
      * @return The view that is currently selected, if it happens to be in the
      *         range that we draw.
      */
-    private View fillDown(int pos, int nextTop) {
+    private View fillRight(int pos, int nextLeft) {
         View selectedView = null;
 
-        int end = (getBottom() - getTop());
+        int end = (getRight() - getLeft());
         if (mClipToPadding) {
-            end -= mListPadding.bottom;
+            end -= mListPadding.right;
         }
 
-        while (nextTop < end && pos < mItemCount) {
+        while (nextLeft < end && pos < mItemCount) {
             // is this the selected item?
             boolean selected = pos == mSelectedPosition;
-            View child = makeAndAddView(pos, nextTop, true, mListPadding.left, selected);
+            View child = makeAndAddView(pos, nextLeft, true, mListPadding.top, selected);
 
-            nextTop = child.getBottom() + mDividerHeight;
+            nextLeft = child.getRight() + mDividerWidth;
             if (selected) {
                 selectedView = child;
             }
@@ -666,24 +666,24 @@ public class HorizontalListView extends AbsHorizontalListView {
      *
      * @param pos The first position to put in the list
      *
-     * @param nextBottom The location where the bottom of the item associated
+     * @param nextRight The location where the bottom of the item associated
      *        with pos should be drawn
      *
      * @return The view that is currently selected
      */
-    private View fillUp(int pos, int nextBottom) {
+    private View fillLeft(int pos, int nextRight) {
         View selectedView = null;
 
         int end = 0;
         if (mClipToPadding) {
-            end = mListPadding.top;
+            end = mListPadding.left;
         }
 
-        while (nextBottom > end && pos >= 0) {
+        while (nextRight > end && pos >= 0) {
             // is this the selected item?
             boolean selected = pos == mSelectedPosition;
-            View child = makeAndAddView(pos, nextBottom, false, mListPadding.left, selected);
-            nextBottom = child.getTop() - mDividerHeight;
+            View child = makeAndAddView(pos, nextRight, false, mListPadding.top, selected);
+            nextRight = child.getLeft() - mDividerWidth;
             if (selected) {
                 selectedView = child;
             }
@@ -699,18 +699,18 @@ public class HorizontalListView extends AbsHorizontalListView {
     /**
      * Fills the list from top to bottom, starting with mFirstPosition
      *
-     * @param nextTop The location where the top of the first item should be
+     * @param nextLeft The location where the top of the first item should be
      *        drawn
      *
      * @return The view that is currently selected
      */
-    private View fillFromTop(int nextTop) {
+    private View fillFromLeft(int nextLeft) {
         mFirstPosition = Math.min(mFirstPosition, mSelectedPosition);
         mFirstPosition = Math.min(mFirstPosition, mItemCount - 1);
         if (mFirstPosition < 0) {
             mFirstPosition = 0;
         }
-        return fillDown(mFirstPosition, nextTop);
+        return fillRight(mFirstPosition, nextLeft);
     }
 
 
@@ -718,29 +718,29 @@ public class HorizontalListView extends AbsHorizontalListView {
      * Put mSelectedPosition in the middle of the screen and then build up and
      * down from there. This method forces mSelectedPosition to the center.
      *
-     * @param childrenTop Top of the area in which children can be drawn, as
+     * @param childrenLeft Top of the area in which children can be drawn, as
      *        measured in pixels
-     * @param childrenBottom Bottom of the area in which children can be drawn,
+     * @param childrenRight Bottom of the area in which children can be drawn,
      *        as measured in pixels
      * @return Currently selected view
      */
-    private View fillFromMiddle(int childrenTop, int childrenBottom) {
-        int height = childrenBottom - childrenTop;
+    private View fillFromMiddle(int childrenLeft, int childrenRight) {
+        int width = childrenRight - childrenLeft;
 
         int position = reconcileSelectedPosition();
 
-        View sel = makeAndAddView(position, childrenTop, true,
-                mListPadding.left, true);
+        View sel = makeAndAddView(position, childrenLeft, true,
+                mListPadding.top, true);
         mFirstPosition = position;
 
-        int selHeight = sel.getMeasuredHeight();
-        if (selHeight <= height) {
-            sel.offsetTopAndBottom((height - selHeight) / 2);
+        int selWidth = sel.getMeasuredWidth();
+        if (selWidth <= width) {
+            sel.offsetLeftAndRight((width - selWidth) / 2);
         }
 
-        fillAboveAndBelow(sel, position);
+        fillToLeftAndRight(sel, position);
 
-        if (!mStackFromBottom) {
+        if (!mStackFromRight) {
             correctTooHigh(getChildCount());
         } else {
             correctTooLow(getChildCount());
@@ -756,16 +756,16 @@ public class HorizontalListView extends AbsHorizontalListView {
      * @param sel The selected view
      * @param position The position corresponding to sel
      */
-    private void fillAboveAndBelow(View sel, int position) {
-        final int dividerHeight = mDividerHeight;
-        if (!mStackFromBottom) {
-            fillUp(position - 1, sel.getTop() - dividerHeight);
-            adjustViewsUpOrDown();
-            fillDown(position + 1, sel.getBottom() + dividerHeight);
+    private void fillToLeftAndRight(View sel, int position) {
+        final int dividerWidth = mDividerWidth;
+        if (!mStackFromRight) {
+            fillLeft(position - 1, sel.getLeft() - dividerWidth);
+            adjustViewsLeftOrRight();
+            fillRight(position + 1, sel.getRight() + dividerWidth);
         } else {
-            fillDown(position + 1, sel.getBottom() + dividerHeight);
-            adjustViewsUpOrDown();
-            fillUp(position - 1, sel.getTop() - dividerHeight);
+            fillRight(position + 1, sel.getRight() + dividerWidth);
+            adjustViewsLeftOrRight();
+            fillLeft(position - 1, sel.getLeft() - dividerWidth);
         }
     }
 
@@ -775,56 +775,56 @@ public class HorizontalListView extends AbsHorizontalListView {
      * location. The selection may be moved so that it does not intersect the
      * faded edges. The grid is then filled upwards and downwards from there.
      *
-     * @param selectedTop Where the selected item should be
-     * @param childrenTop Where to start drawing children
-     * @param childrenBottom Last pixel where children can be drawn
+     * @param selectedLeft Where the selected item should be
+     * @param childrenLeft Where to start drawing children
+     * @param childrenRight Last pixel where children can be drawn
      * @return The view that currently has selection
      */
-    private View fillFromSelection(int selectedTop, int childrenTop, int childrenBottom) {
-        int fadingEdgeLength = getVerticalFadingEdgeLength();
+    private View fillFromSelection(int selectedLeft, int childrenLeft, int childrenRight) {
+        int fadingEdgeLength = getHorizontalFadingEdgeLength();
         final int selectedPosition = mSelectedPosition;
 
         View sel;
 
-        final int topSelectionPixel = getTopSelectionPixel(childrenTop, fadingEdgeLength,
+        final int leftSelectionPixel = getLeftSelectionPixel(childrenLeft, fadingEdgeLength,
                 selectedPosition);
-        final int bottomSelectionPixel = getBottomSelectionPixel(childrenBottom, fadingEdgeLength,
+        final int rightSelectionPixel = getRightSelectionPixel(childrenRight, fadingEdgeLength,
                 selectedPosition);
 
-        sel = makeAndAddView(selectedPosition, selectedTop, true, mListPadding.left, true);
+        sel = makeAndAddView(selectedPosition, selectedLeft, true, mListPadding.top, true);
 
 
         // Some of the newly selected item extends below the bottom of the list
-        if (sel.getBottom() > bottomSelectionPixel) {
+        if (sel.getRight() > rightSelectionPixel) {
             // Find space available above the selection into which we can scroll
             // upwards
-            final int spaceAbove = sel.getTop() - topSelectionPixel;
+            final int spaceAbove = sel.getLeft() - leftSelectionPixel;
 
             // Find space required to bring the bottom of the selected item
             // fully into view
-            final int spaceBelow = sel.getBottom() - bottomSelectionPixel;
+            final int spaceBelow = sel.getRight() - rightSelectionPixel;
             final int offset = Math.min(spaceAbove, spaceBelow);
 
             // Now offset the selected item to get it into view
-            sel.offsetTopAndBottom(-offset);
-        } else if (sel.getTop() < topSelectionPixel) {
+            sel.offsetLeftAndRight(-offset);
+        } else if (sel.getLeft() < leftSelectionPixel) {
             // Find space required to bring the top of the selected item fully
             // into view
-            final int spaceAbove = topSelectionPixel - sel.getTop();
+            final int spaceAbove = leftSelectionPixel - sel.getLeft();
 
             // Find space available below the selection into which we can scroll
             // downwards
-            final int spaceBelow = bottomSelectionPixel - sel.getBottom();
+            final int spaceBelow = rightSelectionPixel - sel.getRight();
             final int offset = Math.min(spaceAbove, spaceBelow);
 
             // Offset the selected item to get it into view
-            sel.offsetTopAndBottom(offset);
+            sel.offsetLeftAndRight(offset);
         }
 
         // Fill in views above and below
-        fillAboveAndBelow(sel, selectedPosition);
+        fillToLeftAndRight(sel, selectedPosition);
 
-        if (!mStackFromBottom) {
+        if (!mStackFromRight) {
             correctTooHigh(getChildCount());
         } else {
             correctTooLow(getChildCount());
@@ -836,35 +836,35 @@ public class HorizontalListView extends AbsHorizontalListView {
     /**
      * Calculate the bottom-most pixel we can draw the selection into
      *
-     * @param childrenBottom Bottom pixel were children can be drawn
+     * @param childrenRight Bottom pixel were children can be drawn
      * @param fadingEdgeLength Length of the fading edge in pixels, if present
      * @param selectedPosition The position that will be selected
      * @return The bottom-most pixel we can draw the selection into
      */
-    private int getBottomSelectionPixel(int childrenBottom, int fadingEdgeLength,
-            int selectedPosition) {
-        int bottomSelectionPixel = childrenBottom;
+    private int getRightSelectionPixel(int childrenRight, int fadingEdgeLength,
+                                       int selectedPosition) {
+        int rightSelectionPixel = childrenRight;
         if (selectedPosition != mItemCount - 1) {
-            bottomSelectionPixel -= fadingEdgeLength;
+            rightSelectionPixel -= fadingEdgeLength;
         }
-        return bottomSelectionPixel;
+        return rightSelectionPixel;
     }
 
     /**
      * Calculate the top-most pixel we can draw the selection into
      *
-     * @param childrenTop Top pixel were children can be drawn
+     * @param childrenLeft Top pixel were children can be drawn
      * @param fadingEdgeLength Length of the fading edge in pixels, if present
      * @param selectedPosition The position that will be selected
      * @return The top-most pixel we can draw the selection into
      */
-    private int getTopSelectionPixel(int childrenTop, int fadingEdgeLength, int selectedPosition) {
+    private int getLeftSelectionPixel(int childrenLeft, int fadingEdgeLength, int selectedPosition) {
         // first pixel we can draw the selection into
-        int topSelectionPixel = childrenTop;
+        int leftSelectionPixel = childrenLeft;
         if (selectedPosition > 0) {
-            topSelectionPixel += fadingEdgeLength;
+            leftSelectionPixel += fadingEdgeLength;
         }
-        return topSelectionPixel;
+        return leftSelectionPixel;
     }
 
     /**
@@ -900,20 +900,20 @@ public class HorizontalListView extends AbsHorizontalListView {
      * @param newSel The view that is to become selected. Useful for trying to
      *        put the new selection in the same place
      * @param delta Which way we are moving
-     * @param childrenTop Where to start drawing children
-     * @param childrenBottom Last pixel where children can be drawn
+     * @param childrenLeft Where to start drawing children
+     * @param childrenRight Last pixel where children can be drawn
      * @return The view that currently has selection
      */
-    private View moveSelection(View oldSel, View newSel, int delta, int childrenTop,
-            int childrenBottom) {
-        int fadingEdgeLength = getVerticalFadingEdgeLength();
+    private View moveSelection(View oldSel, View newSel, int delta, int childrenLeft,
+            int childrenRight) {
+        int fadingEdgeLength = getHorizontalFadingEdgeLength();
         final int selectedPosition = mSelectedPosition;
 
         View sel;
 
-        final int topSelectionPixel = getTopSelectionPixel(childrenTop, fadingEdgeLength,
+        final int leftSelectionPixel = getLeftSelectionPixel(childrenLeft, fadingEdgeLength,
                 selectedPosition);
-        final int bottomSelectionPixel = getBottomSelectionPixel(childrenTop, fadingEdgeLength,
+        final int rightSelectionPixel = getRightSelectionPixel(childrenLeft, fadingEdgeLength,
                 selectedPosition);
 
         if (delta > 0) {
@@ -938,44 +938,44 @@ public class HorizontalListView extends AbsHorizontalListView {
              */
 
             // Put oldSel (A) where it belongs
-            oldSel = makeAndAddView(selectedPosition - 1, oldSel.getTop(), true,
-                    mListPadding.left, false);
+            oldSel = makeAndAddView(selectedPosition - 1, oldSel.getLeft(), true,
+                    mListPadding.top, false);
 
-            final int dividerHeight = mDividerHeight;
+            final int dividerWidth = mDividerWidth;
 
             // Now put the new selection (B) below that
-            sel = makeAndAddView(selectedPosition, oldSel.getBottom() + dividerHeight, true,
-                    mListPadding.left, true);
+            sel = makeAndAddView(selectedPosition, oldSel.getRight() + dividerWidth, true,
+                    mListPadding.top, true);
 
             // Some of the newly selected item extends below the bottom of the list
-            if (sel.getBottom() > bottomSelectionPixel) {
+            if (sel.getRight() > rightSelectionPixel) {
 
                 // Find space available above the selection into which we can scroll upwards
-                int spaceAbove = sel.getTop() - topSelectionPixel;
+                int spaceAbove = sel.getLeft() - leftSelectionPixel;
 
                 // Find space required to bring the bottom of the selected item fully into view
-                int spaceBelow = sel.getBottom() - bottomSelectionPixel;
+                int spaceBelow = sel.getRight() - rightSelectionPixel;
 
-                // Don't scroll more than half the height of the list
-                int halfVerticalSpace = (childrenBottom - childrenTop) / 2;
+                // Don't scroll more than half the width of the list
+                int halfHorizontalSpace = (childrenRight - childrenLeft) / 2;
                 int offset = Math.min(spaceAbove, spaceBelow);
-                offset = Math.min(offset, halfVerticalSpace);
+                offset = Math.min(offset, halfHorizontalSpace);
 
                 // We placed oldSel, so offset that item
-                oldSel.offsetTopAndBottom(-offset);
+                oldSel.offsetLeftAndRight(-offset);
                 // Now offset the selected item to get it into view
-                sel.offsetTopAndBottom(-offset);
+                sel.offsetLeftAndRight(-offset);
             }
 
             // Fill in views above and below
-            if (!mStackFromBottom) {
-                fillUp(mSelectedPosition - 2, sel.getTop() - dividerHeight);
-                adjustViewsUpOrDown();
-                fillDown(mSelectedPosition + 1, sel.getBottom() + dividerHeight);
+            if (!mStackFromRight) {
+                fillLeft(mSelectedPosition - 2, sel.getLeft() - dividerWidth);
+                adjustViewsLeftOrRight();
+                fillRight(mSelectedPosition + 1, sel.getRight() + dividerWidth);
             } else {
-                fillDown(mSelectedPosition + 1, sel.getBottom() + dividerHeight);
-                adjustViewsUpOrDown();
-                fillUp(mSelectedPosition - 2, sel.getTop() - dividerHeight);
+                fillRight(mSelectedPosition + 1, sel.getRight() + dividerWidth);
+                adjustViewsLeftOrRight();
+                fillLeft(mSelectedPosition - 2, sel.getLeft() - dividerWidth);
             }
         } else if (delta < 0) {
             /*
@@ -1000,56 +1000,56 @@ public class HorizontalListView extends AbsHorizontalListView {
 
             if (newSel != null) {
                 // Try to position the top of newSel (A) where it was before it was selected
-                sel = makeAndAddView(selectedPosition, newSel.getTop(), true, mListPadding.left,
+                sel = makeAndAddView(selectedPosition, newSel.getLeft(), true, mListPadding.top,
                         true);
             } else {
                 // If (A) was not on screen and so did not have a view, position
                 // it above the oldSel (B)
-                sel = makeAndAddView(selectedPosition, oldSel.getTop(), false, mListPadding.left,
+                sel = makeAndAddView(selectedPosition, oldSel.getLeft(), false, mListPadding.top,
                         true);
             }
 
             // Some of the newly selected item extends above the top of the list
-            if (sel.getTop() < topSelectionPixel) {
+            if (sel.getLeft() < leftSelectionPixel) {
                 // Find space required to bring the top of the selected item fully into view
-                int spaceAbove = topSelectionPixel - sel.getTop();
+                int spaceAbove = leftSelectionPixel - sel.getLeft();
 
                // Find space available below the selection into which we can scroll downwards
-                int spaceBelow = bottomSelectionPixel - sel.getBottom();
+                int spaceBelow = rightSelectionPixel - sel.getRight();
 
-                // Don't scroll more than half the height of the list
-                int halfVerticalSpace = (childrenBottom - childrenTop) / 2;
+                // Don't scroll more than half the width of the list
+                int halfHorizontalSpace = (childrenRight - childrenLeft) / 2;
                 int offset = Math.min(spaceAbove, spaceBelow);
-                offset = Math.min(offset, halfVerticalSpace);
+                offset = Math.min(offset, halfHorizontalSpace);
 
                 // Offset the selected item to get it into view
-                sel.offsetTopAndBottom(offset);
+                sel.offsetLeftAndRight(offset);
             }
 
             // Fill in views above and below
-            fillAboveAndBelow(sel, selectedPosition);
+            fillToLeftAndRight(sel, selectedPosition);
         } else {
 
-            int oldTop = oldSel.getTop();
+            int oldLeft = oldSel.getLeft();
 
             /*
              * Case 3: Staying still
              */
-            sel = makeAndAddView(selectedPosition, oldTop, true, mListPadding.left, true);
+            sel = makeAndAddView(selectedPosition, oldLeft, true, mListPadding.top, true);
 
             // We're staying still...
-            if (oldTop < childrenTop) {
+            if (oldLeft < childrenLeft) {
                 // ... but the top of the old selection was off screen.
                 // (This can happen if the data changes size out from under us)
-                int newBottom = sel.getBottom();
-                if (newBottom < childrenTop + 20) {
+                int newRight = sel.getRight();
+                if (newRight < childrenLeft + 20) {
                     // Not enough visible -- bring it onscreen
-                    sel.offsetTopAndBottom(childrenTop - sel.getTop());
+                    sel.offsetLeftAndRight(childrenLeft - sel.getLeft());
                 }
             }
 
             // Fill in views above and below
-            fillAboveAndBelow(sel, selectedPosition);
+            fillToLeftAndRight(sel, selectedPosition);
         }
 
         return sel;
@@ -1057,16 +1057,16 @@ public class HorizontalListView extends AbsHorizontalListView {
 
     private class FocusSelector implements Runnable {
         private int mPosition;
-        private int mPositionTop;
+        private int mPositionLeft;
 
-        public FocusSelector setup(int position, int top) {
+        public FocusSelector setup(int position, int left) {
             mPosition = position;
-            mPositionTop = top;
+            mPositionLeft = left;
             return this;
         }
 
         public void run() {
-            setSelectionFromTop(mPosition, mPositionTop);
+            setSelectionFromLeft(mPosition, mPositionLeft);
         }
     }
 
@@ -1076,13 +1076,13 @@ public class HorizontalListView extends AbsHorizontalListView {
             View focusedChild = getFocusedChild();
             if (focusedChild != null) {
                 final int childPosition = mFirstPosition + indexOfChild(focusedChild);
-                final int childBottom = focusedChild.getBottom();
-                final int offset = Math.max(0, childBottom - (h - getPaddingTop()));
-                final int top = focusedChild.getTop() - offset;
+                final int childRight = focusedChild.getRight();
+                final int offset = Math.max(0, childRight - (h - getPaddingLeft()));
+                final int left = focusedChild.getLeft() - offset;
                 if (mFocusSelector == null) {
                     mFocusSelector = new FocusSelector();
                 }
-                post(mFocusSelector.setup(childPosition, top));
+                post(mFocusSelector.setup(childPosition, left));
             }
         }
         super.onSizeChanged(w, h, oldw, oldh);
@@ -1107,7 +1107,7 @@ public class HorizontalListView extends AbsHorizontalListView {
                 heightMode == MeasureSpec.UNSPECIFIED)) {
             final View child = obtainView(0, mIsScrap);
 
-            measureScrapChild(child, 0, widthMeasureSpec);
+            measureScrapChild(child, 0, heightMeasureSpec);
 
             childWidth = child.getMeasuredWidth();
             childHeight = child.getMeasuredHeight();
@@ -1119,28 +1119,28 @@ public class HorizontalListView extends AbsHorizontalListView {
             }
         }
 
-        if (widthMode == MeasureSpec.UNSPECIFIED) {
-            widthSize = mListPadding.left + mListPadding.right + childWidth +
-                    getVerticalScrollbarWidth();
-        } else {
-            widthSize |= (childState&MEASURED_STATE_MASK);
-        }
-
         if (heightMode == MeasureSpec.UNSPECIFIED) {
             heightSize = mListPadding.top + mListPadding.bottom + childHeight +
-                    getVerticalFadingEdgeLength() * 2;
+                    getHorizontalScrollbarHeight();
+        } else {
+            heightSize |= (childState&MEASURED_STATE_MASK);
         }
 
-        if (heightMode == MeasureSpec.AT_MOST) {
+        if (widthMode == MeasureSpec.UNSPECIFIED) {
+            widthSize = mListPadding.left + mListPadding.right + childWidth +
+                    getHorizontalFadingEdgeLength() * 2;
+        }
+
+        if (widthMode == MeasureSpec.AT_MOST) {
             // TODO: after first layout we should maybe start at the first visible position, not 0
-            heightSize = measureHeightOfChildren(widthMeasureSpec, 0, NO_POSITION, heightSize, -1);
+            widthSize = measureWidthOfChildren(heightMeasureSpec, 0, NO_POSITION, widthSize, -1);
         }
 
         setMeasuredDimension(widthSize , heightSize);
-        mWidthMeasureSpec = widthMeasureSpec;
+        mHeightMeasureSpec = heightMeasureSpec;
     }
 
-    private void measureScrapChild(View child, int position, int widthMeasureSpec) {
+    private void measureScrapChild(View child, int position, int heightMeasureSpec) {
         LayoutParams p = (LayoutParams) child.getLayoutParams();
         if (p == null) {
             p = (LayoutParams) generateDefaultLayoutParams();
@@ -1149,14 +1149,14 @@ public class HorizontalListView extends AbsHorizontalListView {
         p.viewType = mAdapter.getItemViewType(position);
         p.forceAdd = true;
 
-        int childWidthSpec = ViewGroup.getChildMeasureSpec(widthMeasureSpec,
-                mListPadding.left + mListPadding.right, p.width);
-        int lpHeight = p.height;
-        int childHeightSpec;
-        if (lpHeight > 0) {
-            childHeightSpec = MeasureSpec.makeMeasureSpec(lpHeight, MeasureSpec.EXACTLY);
+        int childHeightSpec = ViewGroup.getChildMeasureSpec(heightMeasureSpec,
+                mListPadding.top + mListPadding.bottom, p.height);
+        int lpWidth = p.width;
+        int childWidthSpec;
+        if (lpWidth > 0) {
+            childWidthSpec = MeasureSpec.makeMeasureSpec(lpWidth, MeasureSpec.EXACTLY);
         } else {
-            childHeightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+            childWidthSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         }
         child.measure(childWidthSpec, childHeightSpec);
     }
@@ -1172,22 +1172,22 @@ public class HorizontalListView extends AbsHorizontalListView {
     }
 
     /**
-     * Measures the height of the given range of children (inclusive) and
-     * returns the height with this ListView's padding and divider heights
-     * included. If maxHeight is provided, the measuring will stop when the
-     * current height reaches maxHeight.
+     * Measures the width of the given range of children (inclusive) and
+     * returns the width with this ListView's padding and divider heights
+     * included. If maxWidth is provided, the measuring will stop when the
+     * current width reaches maxWidth.
      *
-     * @param widthMeasureSpec The width measure spec to be given to a child's
+     * @param heightMeasureSpec The width measure spec to be given to a child's
      *            {@link android.view.View#measure(int, int)}.
      * @param startPosition The position of the first child to be shown.
      * @param endPosition The (inclusive) position of the last child to be
      *            shown. Specify {@link #NO_POSITION} if the last child should be
      *            the last available child from the adapter.
-     * @param maxHeight The maximum height that will be returned (if all the
+     * @param maxWidth The maximum width that will be returned (if all the
      *            children don't fit in this value, this value will be
      *            returned).
      * @param disallowPartialChildPosition In general, whether the returned
-     *            height should only contain entire children. This is more
+     *            width should only contain entire children. This is more
      *            powerful--it is the first inclusive position at which partial
      *            children will not be allowed. Example: it looks nice to have
      *            at least 3 completely visible children, and in portrait this
@@ -1195,22 +1195,22 @@ public class HorizontalListView extends AbsHorizontalListView {
      *            when even 2 children can not be completely shown, so a value
      *            of 2 (remember, inclusive) would be good (assuming
      *            startPosition is 0).
-     * @return The height of this ListView with the given children.
+     * @return The width of this ListView with the given children.
      */
-    final int measureHeightOfChildren(int widthMeasureSpec, int startPosition, int endPosition,
-            final int maxHeight, int disallowPartialChildPosition) {
+    final int measureWidthOfChildren(int heightMeasureSpec, int startPosition, int endPosition,
+                                     final int maxWidth, int disallowPartialChildPosition) {
 
         final ListAdapter adapter = mAdapter;
         if (adapter == null) {
-            return mListPadding.top + mListPadding.bottom;
+            return mListPadding.left + mListPadding.right;
         }
 
         // Include the padding of the list
-        int returnedHeight = mListPadding.top + mListPadding.bottom;
-        final int dividerHeight = ((mDividerHeight > 0) && mDivider != null) ? mDividerHeight : 0;
-        // The previous height value that was less than maxHeight and contained
+        int returnedWidth = mListPadding.left + mListPadding.right;
+        final int dividerWidth = ((mDividerWidth > 0) && mDivider != null) ? mDividerWidth : 0;
+        // The previous width value that was less than maxWidth and contained
         // no partial children
-        int prevHeightWithoutPartialChild = 0;
+        int prevWidthWithoutPartialChild = 0;
         int i;
         View child;
 
@@ -1223,11 +1223,11 @@ public class HorizontalListView extends AbsHorizontalListView {
         for (i = startPosition; i <= endPosition; ++i) {
             child = obtainView(i, isScrap);
 
-            measureScrapChild(child, i, widthMeasureSpec);
+            measureScrapChild(child, i, heightMeasureSpec);
 
             if (i > 0) {
                 // Count the divider for all but one child
-                returnedHeight += dividerHeight;
+                returnedWidth += dividerWidth;
             }
 
             // Recycle the view before we possibly return from the method
@@ -1236,44 +1236,44 @@ public class HorizontalListView extends AbsHorizontalListView {
                 recycleBin.addScrapView(child, -1);
             }
 
-            returnedHeight += child.getMeasuredHeight();
+            returnedWidth += child.getMeasuredWidth();
 
-            if (returnedHeight >= maxHeight) {
-                // We went over, figure out which height to return.  If returnedHeight > maxHeight,
+            if (returnedWidth >= maxWidth) {
+                // We went over, figure out which width to return.  If returnedWidth > maxWidth,
                 // then the i'th position did not fit completely.
                 return (disallowPartialChildPosition >= 0) // Disallowing is enabled (> -1)
                             && (i > disallowPartialChildPosition) // We've past the min pos
-                            && (prevHeightWithoutPartialChild > 0) // We have a prev height
-                            && (returnedHeight != maxHeight) // i'th child did not fit completely
-                        ? prevHeightWithoutPartialChild
-                        : maxHeight;
+                            && (prevWidthWithoutPartialChild > 0) // We have a prev width
+                            && (returnedWidth != maxWidth) // i'th child did not fit completely
+                        ? prevWidthWithoutPartialChild
+                        : maxWidth;
             }
 
             if ((disallowPartialChildPosition >= 0) && (i >= disallowPartialChildPosition)) {
-                prevHeightWithoutPartialChild = returnedHeight;
+                prevWidthWithoutPartialChild = returnedWidth;
             }
         }
 
         // At this point, we went through the range of children, and they each
-        // completely fit, so return the returnedHeight
-        return returnedHeight;
+        // completely fit, so return the returnedWidth
+        return returnedWidth;
     }
 
     @Override
-    int findMotionRow(int y) {
+    int findMotionCol(int x) {
         int childCount = getChildCount();
         if (childCount > 0) {
-            if (!mStackFromBottom) {
+            if (!mStackFromRight) {
                 for (int i = 0; i < childCount; i++) {
                     View v = getChildAt(i);
-                    if (y <= v.getBottom()) {
+                    if (x <= v.getRight()) {
                         return mFirstPosition + i;
                     }
                 }
             } else {
                 for (int i = childCount - 1; i >= 0; i--) {
                     View v = getChildAt(i);
-                    if (y >= v.getTop()) {
+                    if (x >= v.getLeft()) {
                         return mFirstPosition + i;
                     }
                 }
@@ -1287,36 +1287,36 @@ public class HorizontalListView extends AbsHorizontalListView {
      * up and down from there.
      *
      * @param position The reference view to use as the starting point
-     * @param top Pixel offset from the top of this view to the top of the
+     * @param left Pixel offset from the left of this view to the left of the
      *        reference view.
      *
      * @return The selected view, or null if the selected view is outside the
      *         visible area.
      */
-    private View fillSpecific(int position, int top) {
+    private View fillSpecific(int position, int left) {
         boolean tempIsSelected = position == mSelectedPosition;
-        View temp = makeAndAddView(position, top, true, mListPadding.left, tempIsSelected);
-        // Possibly changed again in fillUp if we add rows above this one.
+        View temp = makeAndAddView(position, left, true, mListPadding.top, tempIsSelected);
+        // Possibly changed again in fillRight if we add rows toLeft this one.
         mFirstPosition = position;
 
-        View above;
-        View below;
+        View toLeft;
+        View toRight;
 
-        final int dividerHeight = mDividerHeight;
-        if (!mStackFromBottom) {
-            above = fillUp(position - 1, temp.getTop() - dividerHeight);
-            // This will correct for the top of the first view not touching the top of the list
-            adjustViewsUpOrDown();
-            below = fillDown(position + 1, temp.getBottom() + dividerHeight);
+        final int dividerWidth = mDividerWidth;
+        if (!mStackFromRight) {
+            toLeft = fillLeft(position - 1, temp.getLeft() - dividerWidth);
+            // This will correct for the left of the first view not touching the left of the list
+            adjustViewsLeftOrRight();
+            toRight = fillRight(position + 1, temp.getRight() + dividerWidth);
             int childCount = getChildCount();
             if (childCount > 0) {
                 correctTooHigh(childCount);
             }
         } else {
-            below = fillDown(position + 1, temp.getBottom() + dividerHeight);
+            toRight = fillRight(position + 1, temp.getRight() + dividerWidth);
             // This will correct for the bottom of the last view not touching the bottom of the list
-            adjustViewsUpOrDown();
-            above = fillUp(position - 1, temp.getTop() - dividerHeight);
+            adjustViewsLeftOrRight();
+            toLeft = fillLeft(position - 1, temp.getLeft() - dividerWidth);
             int childCount = getChildCount();
             if (childCount > 0) {
                  correctTooLow(childCount);
@@ -1325,10 +1325,10 @@ public class HorizontalListView extends AbsHorizontalListView {
 
         if (tempIsSelected) {
             return temp;
-        } else if (above != null) {
-            return above;
+        } else if (toLeft != null) {
+            return toLeft;
         } else {
-            return below;
+            return toRight;
         }
     }
 
@@ -1349,32 +1349,32 @@ public class HorizontalListView extends AbsHorizontalListView {
             final View lastChild = getChildAt(childCount - 1);
 
             // ... and its bottom edge
-            final int lastBottom = lastChild.getBottom();
+            final int lastRight = lastChild.getRight();
 
             // This is bottom of our drawable area
-            final int end = (getBottom() - getTop()) - mListPadding.bottom;
+            final int end = (getRight() - getLeft()) - mListPadding.right;
 
             // This is how far the bottom edge of the last view is from the bottom of the
             // drawable area
-            int bottomOffset = end - lastBottom;
+            int bottomOffset = end - lastRight;
             View firstChild = getChildAt(0);
-            final int firstTop = firstChild.getTop();
+            final int firstLeft = firstChild.getLeft();
 
             // Make sure we are 1) Too high, and 2) Either there are more rows above the
             // first row or the first row is scrolled off the top of the drawable area
-            if (bottomOffset > 0 && (mFirstPosition > 0 || firstTop < mListPadding.top))  {
+            if (bottomOffset > 0 && (mFirstPosition > 0 || firstLeft < mListPadding.left))  {
                 if (mFirstPosition == 0) {
                     // Don't pull the top too far down
-                    bottomOffset = Math.min(bottomOffset, mListPadding.top - firstTop);
+                    bottomOffset = Math.min(bottomOffset, mListPadding.left - firstLeft);
                 }
                 // Move everything down
-                offsetChildrenTopAndBottomUnhide(bottomOffset);
+                offsetChildrenLeftAndRightUnhide(bottomOffset);
                 if (mFirstPosition > 0) {
                     // Fill the gap that was opened above mFirstPosition with more rows, if
                     // possible
-                    fillUp(mFirstPosition - 1, firstChild.getTop() - mDividerHeight);
+                    fillLeft(mFirstPosition - 1, firstChild.getLeft() - mDividerWidth);
                     // Close up the remaining gap
-                    adjustViewsUpOrDown();
+                    adjustViewsLeftOrRight();
                 }
 
             }
@@ -1397,40 +1397,40 @@ public class HorizontalListView extends AbsHorizontalListView {
             final View firstChild = getChildAt(0);
 
             // ... and its top edge
-            final int firstTop = firstChild.getTop();
+            final int firstLeft = firstChild.getLeft();
 
             // This is top of our drawable area
-            final int start = mListPadding.top;
+            final int start = mListPadding.left;
 
             // This is bottom of our drawable area
-            final int end = (getBottom() - getTop()) - mListPadding.bottom;
+            final int end = (getRight() - getLeft()) - mListPadding.right;
 
             // This is how far the top edge of the first view is from the top of the
             // drawable area
-            int topOffset = firstTop - start;
+            int leftOffset = firstLeft - start;
             View lastChild = getChildAt(childCount - 1);
-            final int lastBottom = lastChild.getBottom();
+            final int lastRight = lastChild.getRight();
             int lastPosition = mFirstPosition + childCount - 1;
 
             // Make sure we are 1) Too low, and 2) Either there are more rows below the
             // last row or the last row is scrolled off the bottom of the drawable area
-            if (topOffset > 0) {
-                if (lastPosition < mItemCount - 1 || lastBottom > end)  {
+            if (leftOffset > 0) {
+                if (lastPosition < mItemCount - 1 || lastRight > end)  {
                     if (lastPosition == mItemCount - 1) {
                         // Don't pull the bottom too far up
-                        topOffset = Math.min(topOffset, lastBottom - end);
+                        leftOffset = Math.min(leftOffset, lastRight - end);
                     }
                     // Move everything up
-                    offsetChildrenTopAndBottomUnhide(-topOffset);
+                    offsetChildrenLeftAndRightUnhide(-leftOffset);
                     if (lastPosition < mItemCount - 1) {
                         // Fill the gap that was opened below the last position with more rows, if
                         // possible
-                        fillDown(lastPosition + 1, lastChild.getBottom() + mDividerHeight);
+                        fillRight(lastPosition + 1, lastChild.getRight() + mDividerWidth);
                         // Close up the remaining gap
-                        adjustViewsUpOrDown();
+                        adjustViewsLeftOrRight();
                     }
                 } else if (lastPosition == mItemCount - 1) {
-                    adjustViewsUpOrDown();
+                    adjustViewsLeftOrRight();
                 }
             }
         }
@@ -1456,8 +1456,8 @@ public class HorizontalListView extends AbsHorizontalListView {
                 return;
             }
 
-            int childrenTop = mListPadding.top;
-            int childrenBottom = getBottom() - getTop() - mListPadding.bottom;
+            int childrenLeft = mListPadding.left;
+            int childrenRight = getRight() - getLeft() - mListPadding.right;
 
             int childCount = getChildCount();
             int index = 0;
@@ -1482,8 +1482,8 @@ public class HorizontalListView extends AbsHorizontalListView {
                     newSel = getChildAt(index);
                 }
                 break;
-            case LAYOUT_FORCE_TOP:
-            case LAYOUT_FORCE_BOTTOM:
+            case LAYOUT_FORCE_LEFT:
+            case LAYOUT_FORCE_RIGHT:
             case LAYOUT_SPECIFIC:
             case LAYOUT_SYNC:
                 break;
@@ -1600,49 +1600,49 @@ public class HorizontalListView extends AbsHorizontalListView {
             switch (mLayoutMode) {
             case LAYOUT_SET_SELECTION:
                 if (newSel != null) {
-                    sel = fillFromSelection(newSel.getTop(), childrenTop, childrenBottom);
+                    sel = fillFromSelection(newSel.getLeft(), childrenLeft, childrenRight);
                 } else {
-                    sel = fillFromMiddle(childrenTop, childrenBottom);
+                    sel = fillFromMiddle(childrenLeft, childrenRight);
                 }
                 break;
             case LAYOUT_SYNC:
-                sel = fillSpecific(mSyncPosition, mSpecificTop);
+                sel = fillSpecific(mSyncPosition, mSpecificLeft);
                 break;
-            case LAYOUT_FORCE_BOTTOM:
-                sel = fillUp(mItemCount - 1, childrenBottom);
-                adjustViewsUpOrDown();
+            case LAYOUT_FORCE_RIGHT:
+                sel = fillLeft(mItemCount - 1, childrenRight);
+                adjustViewsLeftOrRight();
                 break;
-            case LAYOUT_FORCE_TOP:
+            case LAYOUT_FORCE_LEFT:
                 mFirstPosition = 0;
-                sel = fillFromTop(childrenTop);
-                adjustViewsUpOrDown();
+                sel = fillFromLeft(childrenLeft);
+                adjustViewsLeftOrRight();
                 break;
             case LAYOUT_SPECIFIC:
-                sel = fillSpecific(reconcileSelectedPosition(), mSpecificTop);
+                sel = fillSpecific(reconcileSelectedPosition(), mSpecificLeft);
                 break;
             case LAYOUT_MOVE_SELECTION:
-                sel = moveSelection(oldSel, newSel, delta, childrenTop, childrenBottom);
+                sel = moveSelection(oldSel, newSel, delta, childrenLeft, childrenRight);
                 break;
             default:
                 if (childCount == 0) {
-                    if (!mStackFromBottom) {
+                    if (!mStackFromRight) {
                         final int position = lookForSelectablePosition(0, true);
                         setSelectedPositionInt(position);
-                        sel = fillFromTop(childrenTop);
+                        sel = fillFromLeft(childrenLeft);
                     } else {
                         final int position = lookForSelectablePosition(mItemCount - 1, false);
                         setSelectedPositionInt(position);
-                        sel = fillUp(mItemCount - 1, childrenBottom);
+                        sel = fillLeft(mItemCount - 1, childrenRight);
                     }
                 } else {
                     if (mSelectedPosition >= 0 && mSelectedPosition < mItemCount) {
                         sel = fillSpecific(mSelectedPosition,
-                                oldSel == null ? childrenTop : oldSel.getTop());
+                                oldSel == null ? childrenLeft : oldSel.getLeft());
                     } else if (mFirstPosition < mItemCount) {
                         sel = fillSpecific(mFirstPosition,
-                                oldFirst == null ? childrenTop : oldFirst.getTop());
+                                oldFirst == null ? childrenLeft : oldFirst.getLeft());
                     } else {
-                        sel = fillSpecific(0, childrenTop);
+                        sel = fillSpecific(0, childrenLeft);
                     }
                 }
                 break;
@@ -1674,13 +1674,13 @@ public class HorizontalListView extends AbsHorizontalListView {
                 } else {
                     positionSelector(INVALID_POSITION, sel);
                 }
-                mSelectedTop = sel.getTop();
+                mSelectedLeft = sel.getLeft();
             } else {
                 if (mTouchMode > TOUCH_MODE_DOWN && mTouchMode < TOUCH_MODE_SCROLL) {
                     View child = getChildAt(mMotionPosition - mFirstPosition);
                     if (child != null) positionSelector(mMotionPosition, child);
                 } else {
-                    mSelectedTop = 0;
+                    mSelectedLeft = 0;
                     mSelectorRect.setEmpty();
                 }
 
@@ -1782,14 +1782,14 @@ public class HorizontalListView extends AbsHorizontalListView {
      * recycle bin.
      *
      * @param position Logical position in the list
-     * @param y Top or bottom edge of the view to add
-     * @param flow If flow is true, align top edge to y. If false, align bottom
-     *        edge to y.
-     * @param childrenLeft Left edge where children should be positioned
+     * @param x Top or bottom edge of the view to add
+     * @param flow If flow is true, align top edge to x. If false, align bottom
+     *        edge to x.
+     * @param childTop Left edge where children should be positioned
      * @param selected Is this position selected?
      * @return View that was added
      */
-    private View makeAndAddView(int position, int y, boolean flow, int childrenLeft,
+    private View makeAndAddView(int position, int x, boolean flow, int childTop,
             boolean selected) {
         View child;
 
@@ -1800,7 +1800,7 @@ public class HorizontalListView extends AbsHorizontalListView {
             if (child != null) {
                 // Found it -- we're using an existing child
                 // This just needs to be positioned
-                setupChild(child, position, y, flow, childrenLeft, selected, true);
+                setupChild(child, position, x, flow, childTop, selected, true);
 
                 return child;
             }
@@ -1810,7 +1810,7 @@ public class HorizontalListView extends AbsHorizontalListView {
         child = obtainView(position, mIsScrap);
 
         // This needs to be positioned and measured
-        setupChild(child, position, y, flow, childrenLeft, selected, mIsScrap[0]);
+        setupChild(child, position, x, flow, childTop, selected, mIsScrap[0]);
 
         return child;
     }
@@ -1821,15 +1821,15 @@ public class HorizontalListView extends AbsHorizontalListView {
      *
      * @param child The view to add
      * @param position The position of this child
-     * @param y The y position relative to which this view will be positioned
-     * @param flowDown If true, align top edge to y. If false, align bottom
-     *        edge to y.
-     * @param childrenLeft Left edge where children should be positioned
+     * @param x The x position relative to which this view will be positioned
+     * @param flowRight If true, align top edge to x. If false, align bottom
+     *        edge to x.
+     * @param childTop Left edge where children should be positioned
      * @param selected Is this position selected?
      * @param recycled Has this view been pulled from the recycle bin? If so it
      *        does not need to be remeasured.
      */
-    private void setupChild(View child, int position, int y, boolean flowDown, int childrenLeft,
+    private void setupChild(View child, int position, int x, boolean flowRight, int childTop,
             boolean selected, boolean recycled) {
         final boolean isSelected = selected && shouldShowSelector();
         final boolean updateChildSelected = isSelected != child.isSelected();
@@ -1849,13 +1849,13 @@ public class HorizontalListView extends AbsHorizontalListView {
 
         if ((recycled && !p.forceAdd) || (p.recycledHeaderFooter &&
                 p.viewType == AdapterView.ITEM_VIEW_TYPE_HEADER_OR_FOOTER)) {
-            attachViewToParent(child, flowDown ? -1 : 0, p);
+            attachViewToParent(child, flowRight ? -1 : 0, p);
         } else {
             p.forceAdd = false;
             if (p.viewType == AdapterView.ITEM_VIEW_TYPE_HEADER_OR_FOOTER) {
                 p.recycledHeaderFooter = true;
             }
-            addViewInLayout(child, flowDown ? -1 : 0, p, true);
+            addViewInLayout(child, flowRight ? -1 : 0, p, true);
         }
 
         if (updateChildSelected) {
@@ -1875,14 +1875,14 @@ public class HorizontalListView extends AbsHorizontalListView {
         }
 
         if (needToMeasure) {
-            int childWidthSpec = ViewGroup.getChildMeasureSpec(mWidthMeasureSpec,
-                    mListPadding.left + mListPadding.right, p.width);
-            int lpHeight = p.height;
-            int childHeightSpec;
-            if (lpHeight > 0) {
-                childHeightSpec = MeasureSpec.makeMeasureSpec(lpHeight, MeasureSpec.EXACTLY);
+            int childHeightSpec = ViewGroup.getChildMeasureSpec(mHeightMeasureSpec,
+                    mListPadding.top + mListPadding.bottom, p.height);
+            int lpWidth = p.width;
+            int childWidthSpec;
+            if (lpWidth > 0) {
+                childWidthSpec = MeasureSpec.makeMeasureSpec(lpWidth, MeasureSpec.EXACTLY);
             } else {
-                childHeightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+                childWidthSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
             }
             child.measure(childWidthSpec, childHeightSpec);
         } else {
@@ -1891,15 +1891,15 @@ public class HorizontalListView extends AbsHorizontalListView {
 
         final int w = child.getMeasuredWidth();
         final int h = child.getMeasuredHeight();
-        final int childTop = flowDown ? y : y - h;
+        final int childLeft = flowRight ? x : x - w;
 
         if (needToMeasure) {
-            final int childRight = childrenLeft + w;
             final int childBottom = childTop + h;
-            child.layout(childrenLeft, childTop, childRight, childBottom);
+            final int childRight = childLeft + w;
+            child.layout(childLeft, childTop, childRight, childBottom);
         } else {
-            child.offsetLeftAndRight(childrenLeft - child.getLeft());
             child.offsetTopAndBottom(childTop - child.getTop());
+            child.offsetLeftAndRight(childLeft - child.getLeft());
         }
 
         if (mCachingStarted && !child.isDrawingCacheEnabled()) {
@@ -1927,19 +1927,19 @@ public class HorizontalListView extends AbsHorizontalListView {
      */
     @Override
     public void setSelection(int position) {
-        setSelectionFromTop(position, 0);
+        setSelectionFromLeft(position, 0);
     }
 
     /**
-     * Sets the selected item and positions the selection y pixels from the top edge
+     * Sets the selected item and positions the selection x pixels from the top edge
      * of the ListView. (If in touch mode, the item will not be selected but it will
      * still be positioned appropriately.)
      *
      * @param position Index (starting at 0) of the data item to be selected.
-     * @param y The distance from the top edge of the ListView (plus padding) that the
+     * @param x The distance from the top edge of the ListView (plus padding) that the
      *        item will be positioned.
      */
-    public void setSelectionFromTop(int position, int y) {
+    public void setSelectionFromLeft(int position, int x) {
         if (mAdapter == null) {
             return;
         }
@@ -1955,11 +1955,11 @@ public class HorizontalListView extends AbsHorizontalListView {
 
         if (position >= 0) {
             mLayoutMode = LAYOUT_SPECIFIC;
-            mSpecificTop = mListPadding.top + y;
+            mSpecificLeft = mListPadding.left + x;
 
             if (mNeedSync) {
                 mSyncPosition = position;
-                mSyncRowId = mAdapter.getItemId(position);
+                mSyncColId = mAdapter.getItemId(position);
             }
 
             if (mPositionScroller != null) {
@@ -2004,12 +2004,12 @@ public class HorizontalListView extends AbsHorizontalListView {
      * Find a position that can be selected (i.e., is not a separator).
      *
      * @param position The starting position to look at.
-     * @param lookDown Whether to look down for other positions.
+     * @param lookRight Whether to look down for other positions.
      * @return The next selectable position starting at position and then searching either up or
      *         down. Returns {@link #INVALID_POSITION} if nothing can be found.
      */
     @Override
-    int lookForSelectablePosition(int position, boolean lookDown) {
+    int lookForSelectablePosition(int position, boolean lookRight) {
         final ListAdapter adapter = mAdapter;
         if (adapter == null || isInTouchMode()) {
             return INVALID_POSITION;
@@ -2017,7 +2017,7 @@ public class HorizontalListView extends AbsHorizontalListView {
 
         final int count = adapter.getCount();
         if (!mAreAllItemsSelectable) {
-            if (lookDown) {
+            if (lookRight) {
                 position = Math.max(0, position);
                 while (position < count && !adapter.isEnabled(position)) {
                     position++;
@@ -2096,7 +2096,7 @@ public class HorizontalListView extends AbsHorizontalListView {
         if (mAdapter == null || !mIsAttached) {
             return false;
         }
-
+        // TODO I stopped swaping heare (j.m.)
         if (mDataChanged) {
             layoutChildren();
         }
@@ -2106,12 +2106,12 @@ public class HorizontalListView extends AbsHorizontalListView {
 
         if (action != KeyEvent.ACTION_UP) {
             switch (keyCode) {
-            case KeyEvent.KEYCODE_DPAD_UP:
+            case KeyEvent.KEYCODE_DPAD_RIGHT:
                 if (event.hasNoModifiers()) {
                     handled = resurrectSelectionIfNeeded();
                     if (!handled) {
                         while (count-- > 0) {
-                            if (arrowScroll(FOCUS_UP)) {
+                            if (arrowScroll(FOCUS_RIGHT)) {
                                 handled = true;
                             } else {
                                 break;
@@ -2119,36 +2119,36 @@ public class HorizontalListView extends AbsHorizontalListView {
                         }
                     }
                 } else if (event.hasModifiers(KeyEvent.META_ALT_ON)) {
-                    handled = resurrectSelectionIfNeeded() || fullScroll(FOCUS_UP);
-                }
-                break;
-
-            case KeyEvent.KEYCODE_DPAD_DOWN:
-                if (event.hasNoModifiers()) {
-                    handled = resurrectSelectionIfNeeded();
-                    if (!handled) {
-                        while (count-- > 0) {
-                            if (arrowScroll(FOCUS_DOWN)) {
-                                handled = true;
-                            } else {
-                                break;
-                            }
-                        }
-                    }
-                } else if (event.hasModifiers(KeyEvent.META_ALT_ON)) {
-                    handled = resurrectSelectionIfNeeded() || fullScroll(FOCUS_DOWN);
+                    handled = resurrectSelectionIfNeeded() || fullScroll(FOCUS_RIGHT);
                 }
                 break;
 
             case KeyEvent.KEYCODE_DPAD_LEFT:
                 if (event.hasNoModifiers()) {
-                    handled = handleHorizontalFocusWithinListItem(View.FOCUS_LEFT);
+                    handled = resurrectSelectionIfNeeded();
+                    if (!handled) {
+                        while (count-- > 0) {
+                            if (arrowScroll(FOCUS_LEFT)) {
+                                handled = true;
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                } else if (event.hasModifiers(KeyEvent.META_ALT_ON)) {
+                    handled = resurrectSelectionIfNeeded() || fullScroll(FOCUS_LEFT);
                 }
                 break;
 
-            case KeyEvent.KEYCODE_DPAD_RIGHT:
+            case KeyEvent.KEYCODE_DPAD_UP:
                 if (event.hasNoModifiers()) {
-                    handled = handleHorizontalFocusWithinListItem(View.FOCUS_RIGHT);
+                    handled = handleHorizontalFocusWithinListItem(View.FOCUS_UP);
+                }
+                break;
+
+            case KeyEvent.KEYCODE_DPAD_DOWN:
+                if (event.hasNoModifiers()) {
+                    handled = handleHorizontalFocusWithinListItem(View.FOCUS_DOWN);
                 }
                 break;
 
@@ -2167,9 +2167,9 @@ public class HorizontalListView extends AbsHorizontalListView {
             case KeyEvent.KEYCODE_SPACE:
                 if (mPopup == null || !mPopup.isShowing()) {
                     if (event.hasNoModifiers()) {
-                        handled = resurrectSelectionIfNeeded() || pageScroll(FOCUS_DOWN);
+                        handled = resurrectSelectionIfNeeded() || pageScroll(FOCUS_RIGHT);
                     } else if (event.hasModifiers(KeyEvent.META_SHIFT_ON)) {
-                        handled = resurrectSelectionIfNeeded() || pageScroll(FOCUS_UP);
+                        handled = resurrectSelectionIfNeeded() || pageScroll(FOCUS_LEFT);
                     }
                     handled = true;
                 }
@@ -2177,29 +2177,29 @@ public class HorizontalListView extends AbsHorizontalListView {
 
             case KeyEvent.KEYCODE_PAGE_UP:
                 if (event.hasNoModifiers()) {
-                    handled = resurrectSelectionIfNeeded() || pageScroll(FOCUS_UP);
+                    handled = resurrectSelectionIfNeeded() || pageScroll(FOCUS_LEFT);
                 } else if (event.hasModifiers(KeyEvent.META_ALT_ON)) {
-                    handled = resurrectSelectionIfNeeded() || fullScroll(FOCUS_UP);
+                    handled = resurrectSelectionIfNeeded() || fullScroll(FOCUS_LEFT);
                 }
                 break;
 
             case KeyEvent.KEYCODE_PAGE_DOWN:
                 if (event.hasNoModifiers()) {
-                    handled = resurrectSelectionIfNeeded() || pageScroll(FOCUS_DOWN);
+                    handled = resurrectSelectionIfNeeded() || pageScroll(FOCUS_RIGHT);
                 } else if (event.hasModifiers(KeyEvent.META_ALT_ON)) {
-                    handled = resurrectSelectionIfNeeded() || fullScroll(FOCUS_DOWN);
+                    handled = resurrectSelectionIfNeeded() || fullScroll(FOCUS_RIGHT);
                 }
                 break;
 
             case KeyEvent.KEYCODE_MOVE_HOME:
                 if (event.hasNoModifiers()) {
-                    handled = resurrectSelectionIfNeeded() || fullScroll(FOCUS_UP);
+                    handled = resurrectSelectionIfNeeded() || fullScroll(FOCUS_LEFT);
                 }
                 break;
 
             case KeyEvent.KEYCODE_MOVE_END:
                 if (event.hasNoModifiers()) {
-                    handled = resurrectSelectionIfNeeded() || fullScroll(FOCUS_DOWN);
+                    handled = resurrectSelectionIfNeeded() || fullScroll(FOCUS_RIGHT);
                 }
                 break;
 
@@ -2212,9 +2212,9 @@ public class HorizontalListView extends AbsHorizontalListView {
                 //     perhaps it should be configurable (and more comprehensive).
                 if (false) {
                     if (event.hasNoModifiers()) {
-                        handled = resurrectSelectionIfNeeded() || arrowScroll(FOCUS_DOWN);
+                        handled = resurrectSelectionIfNeeded() || arrowScroll(FOCUS_RIGHT);
                     } else if (event.hasModifiers(KeyEvent.META_SHIFT_ON)) {
-                        handled = resurrectSelectionIfNeeded() || arrowScroll(FOCUS_UP);
+                        handled = resurrectSelectionIfNeeded() || arrowScroll(FOCUS_LEFT);
                     }
                 }
                 break;
@@ -2265,14 +2265,14 @@ public class HorizontalListView extends AbsHorizontalListView {
             int position = lookForSelectablePosition(nextPage, down);
             if (position >= 0) {
                 mLayoutMode = LAYOUT_SPECIFIC;
-                mSpecificTop = getPaddingTop() + getVerticalFadingEdgeLength();
+                mSpecificLeft = getPaddingLeft() + getHorizontalFadingEdgeLength();
 
                 if (down && position > mItemCount - getChildCount()) {
-                    mLayoutMode = LAYOUT_FORCE_BOTTOM;
+                    mLayoutMode = LAYOUT_FORCE_RIGHT;
                 }
 
                 if (!down && position < getChildCount()) {
-                    mLayoutMode = LAYOUT_FORCE_TOP;
+                    mLayoutMode = LAYOUT_FORCE_LEFT;
                 }
 
                 setSelectionInt(position);
@@ -2298,21 +2298,21 @@ public class HorizontalListView extends AbsHorizontalListView {
      */
     boolean fullScroll(int direction) {
         boolean moved = false;
-        if (direction == FOCUS_UP) {
+        if (direction == FOCUS_LEFT) {
             if (mSelectedPosition != 0) {
                 int position = lookForSelectablePosition(0, true);
                 if (position >= 0) {
-                    mLayoutMode = LAYOUT_FORCE_TOP;
+                    mLayoutMode = LAYOUT_FORCE_LEFT;
                     setSelectionInt(position);
                     invokeOnItemScrollListener();
                 }
                 moved = true;
             }
-        } else if (direction == FOCUS_DOWN) {
+        } else if (direction == FOCUS_RIGHT) {
             if (mSelectedPosition < mItemCount - 1) {
                 int position = lookForSelectablePosition(mItemCount - 1, true);
                 if (position >= 0) {
-                    mLayoutMode = LAYOUT_FORCE_BOTTOM;
+                    mLayoutMode = LAYOUT_FORCE_RIGHT;
                     setSelectionInt(position);
                     invokeOnItemScrollListener();
                 }
@@ -2336,9 +2336,9 @@ public class HorizontalListView extends AbsHorizontalListView {
      * @return Whether this consumes the key event.
      */
     private boolean handleHorizontalFocusWithinListItem(int direction) {
-        if (direction != View.FOCUS_LEFT && direction != View.FOCUS_RIGHT)  {
+        if (direction != View.FOCUS_UP && direction != View.FOCUS_DOWN)  {
             throw new IllegalArgumentException("direction must be one of"
-                    + " {View.FOCUS_LEFT, View.FOCUS_RIGHT}");
+                    + " {View.FOCUS_UP, View.FOCUS_DOWN}");
         }
 
         final int numChildren = getChildCount();
@@ -2397,7 +2397,7 @@ public class HorizontalListView extends AbsHorizontalListView {
      * Handle an arrow scroll going up or down.  Take into account whether items are selectable,
      * whether there are focusable items etc.
      *
-     * @param direction Either {@link android.view.View#FOCUS_UP} or {@link android.view.View#FOCUS_DOWN}.
+     * @param direction Either {@link android.view.View#FOCUS_LEFT} or {@link android.view.View#FOCUS_RIGHT}.
      * @return Whether any scrolling, selection or focus change occured.
      */
     private boolean arrowScrollImpl(int direction) {
@@ -2408,7 +2408,7 @@ public class HorizontalListView extends AbsHorizontalListView {
         View selectedView = getSelectedView();
         int selectedPos = mSelectedPosition;
 
-        int nextSelectedPosition = (direction == View.FOCUS_DOWN) ?
+        int nextSelectedPosition = (direction == View.FOCUS_RIGHT) ?
                 lookForSelectablePosition(selectedPos + 1, true) :
                 lookForSelectablePosition(selectedPos - 1, false);
         int amountToScroll = amountToScroll(direction, nextSelectedPosition);
@@ -2468,7 +2468,7 @@ public class HorizontalListView extends AbsHorizontalListView {
         if (needToRedraw) {
             if (selectedView != null) {
                 positionSelector(selectedPos, selectedView);
-                mSelectedTop = selectedView.getTop();
+                mSelectedLeft = selectedView.getLeft();
             }
             if (!awakenScrollBars()) {
                 invalidate();
@@ -2503,58 +2503,58 @@ public class HorizontalListView extends AbsHorizontalListView {
         // top of whatever view is on top:
         // - moving down: the view that had selection
         // - moving up: the view that is getting selection
-        View topView;
-        View bottomView;
-        int topViewIndex, bottomViewIndex;
-        boolean topSelected = false;
+        View leftView;
+        View rightView;
+        int leftViewIndex, rightViewIndex;
+        boolean leftSelected = false;
         final int selectedIndex = mSelectedPosition - mFirstPosition;
         final int nextSelectedIndex = newSelectedPosition - mFirstPosition;
-        if (direction == View.FOCUS_UP) {
-            topViewIndex = nextSelectedIndex;
-            bottomViewIndex = selectedIndex;
-            topView = getChildAt(topViewIndex);
-            bottomView = selectedView;
-            topSelected = true;
+        if (direction == View.FOCUS_LEFT) {
+            leftViewIndex = nextSelectedIndex;
+            rightViewIndex = selectedIndex;
+            leftView = getChildAt(leftViewIndex);
+            rightView = selectedView;
+            leftSelected = true;
         } else {
-            topViewIndex = selectedIndex;
-            bottomViewIndex = nextSelectedIndex;
-            topView = selectedView;
-            bottomView = getChildAt(bottomViewIndex);
+            leftViewIndex = selectedIndex;
+            rightViewIndex = nextSelectedIndex;
+            leftView = selectedView;
+            rightView = getChildAt(rightViewIndex);
         }
 
         final int numChildren = getChildCount();
 
         // start with top view: is it changing size?
-        if (topView != null) {
-            topView.setSelected(!newFocusAssigned && topSelected);
-            measureAndAdjustDown(topView, topViewIndex, numChildren);
+        if (leftView != null) {
+            leftView.setSelected(!newFocusAssigned && leftSelected);
+            measureAndAdjustRight(leftView, leftViewIndex, numChildren);
         }
 
         // is the bottom view changing size?
-        if (bottomView != null) {
-            bottomView.setSelected(!newFocusAssigned && !topSelected);
-            measureAndAdjustDown(bottomView, bottomViewIndex, numChildren);
+        if (rightView != null) {
+            rightView.setSelected(!newFocusAssigned && !leftSelected);
+            measureAndAdjustRight(rightView, rightViewIndex, numChildren);
         }
     }
 
     /**
-     * Re-measure a child, and if its height changes, lay it out preserving its
+     * Re-measure a child, and if its width changes, lay it out preserving its
      * top, and adjust the children below it appropriately.
      * @param child The child
      * @param childIndex The view group index of the child.
      * @param numChildren The number of children in the view group.
      */
-    private void measureAndAdjustDown(View child, int childIndex, int numChildren) {
-        int oldHeight = child.getHeight();
+    private void measureAndAdjustRight(View child, int childIndex, int numChildren) {
+        int oldWidth = child.getWidth();
         measureItem(child);
-        if (child.getMeasuredHeight() != oldHeight) {
+        if (child.getMeasuredWidth() != oldWidth) {
             // lay out the view, preserving its top
             relayoutMeasuredItem(child);
 
             // adjust views below appropriately
-            final int heightDelta = child.getMeasuredHeight() - oldHeight;
+            final int widthDelta = child.getMeasuredWidth() - oldWidth;
             for (int i = childIndex + 1; i < numChildren; i++) {
-                getChildAt(i).offsetTopAndBottom(heightDelta);
+                getChildAt(i).offsetLeftAndRight(widthDelta);
             }
         }
     }
@@ -2572,14 +2572,14 @@ public class HorizontalListView extends AbsHorizontalListView {
                     ViewGroup.LayoutParams.WRAP_CONTENT);
         }
 
-        int childWidthSpec = ViewGroup.getChildMeasureSpec(mWidthMeasureSpec,
-                mListPadding.left + mListPadding.right, p.width);
-        int lpHeight = p.height;
-        int childHeightSpec;
-        if (lpHeight > 0) {
-            childHeightSpec = MeasureSpec.makeMeasureSpec(lpHeight, MeasureSpec.EXACTLY);
+        int childHeightSpec = ViewGroup.getChildMeasureSpec(mHeightMeasureSpec,
+                mListPadding.top + mListPadding.bottom, p.height);
+        int lpWidth = p.width;
+        int childWidthSpec;
+        if (lpWidth > 0) {
+            childWidthSpec = MeasureSpec.makeMeasureSpec(lpWidth, MeasureSpec.EXACTLY);
         } else {
-            childHeightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+            childWidthSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         }
         child.measure(childWidthSpec, childHeightSpec);
     }
@@ -2592,9 +2592,9 @@ public class HorizontalListView extends AbsHorizontalListView {
     private void relayoutMeasuredItem(View child) {
         final int w = child.getMeasuredWidth();
         final int h = child.getMeasuredHeight();
-        final int childLeft = mListPadding.left;
+        final int childLeft = child.getLeft();
         final int childRight = childLeft + w;
-        final int childTop = child.getTop();
+        final int childTop = mListPadding.top;
         final int childBottom = childTop + h;
         child.layout(childLeft, childTop, childRight, childBottom);
     }
@@ -2603,7 +2603,7 @@ public class HorizontalListView extends AbsHorizontalListView {
      * @return The amount to preview next items when arrow srolling.
      */
     private int getArrowScrollPreviewLength() {
-        return Math.max(MIN_SCROLL_PREVIEW_PIXELS, getVerticalFadingEdgeLength());
+        return Math.max(MIN_SCROLL_PREVIEW_PIXELS, getHorizontalFadingEdgeLength());
     }
 
     /**
@@ -2619,8 +2619,8 @@ public class HorizontalListView extends AbsHorizontalListView {
      *         needs to be taken into account when actually scrolling.
      */
     private int amountToScroll(int direction, int nextSelectedPosition) {
-        final int listBottom = getHeight() - mListPadding.bottom;
-        final int listTop = mListPadding.top;
+        final int listRight = getWidth() - mListPadding.right;
+        final int listLeft = mListPadding.left;
 
         int numChildren = getChildCount();
 
@@ -2631,33 +2631,33 @@ public class HorizontalListView extends AbsHorizontalListView {
             }
             while (numChildren <= indexToMakeVisible) {
                 // Child to view is not attached yet.
-                addViewBelow(getChildAt(numChildren - 1), mFirstPosition + numChildren - 1);
+                addViewToRight(getChildAt(numChildren - 1), mFirstPosition + numChildren - 1);
                 numChildren++;
             }
             final int positionToMakeVisible = mFirstPosition + indexToMakeVisible;
             final View viewToMakeVisible = getChildAt(indexToMakeVisible);
 
-            int goalBottom = listBottom;
+            int goalRight = listRight;
             if (positionToMakeVisible < mItemCount - 1) {
-                goalBottom -= getArrowScrollPreviewLength();
+                goalRight -= getArrowScrollPreviewLength();
             }
 
-            if (viewToMakeVisible.getBottom() <= goalBottom) {
+            if (viewToMakeVisible.getRight() <= goalRight) {
                 // item is fully visible.
                 return 0;
             }
 
             if (nextSelectedPosition != INVALID_POSITION
-                    && (goalBottom - viewToMakeVisible.getTop()) >= getMaxScrollAmount()) {
+                    && (goalRight - viewToMakeVisible.getLeft()) >= getMaxScrollAmount()) {
                 // item already has enough of it visible, changing selection is good enough
                 return 0;
             }
 
-            int amountToScroll = (viewToMakeVisible.getBottom() - goalBottom);
+            int amountToScroll = (viewToMakeVisible.getRight() - goalRight);
 
             if ((mFirstPosition + numChildren) == mItemCount) {
                 // last is last in list -> make sure we don't scroll past it
-                final int max = getChildAt(numChildren - 1).getBottom() - listBottom;
+                final int max = getChildAt(numChildren - 1).getRight() - listRight;
                 amountToScroll = Math.min(amountToScroll, max);
             }
 
@@ -2669,31 +2669,31 @@ public class HorizontalListView extends AbsHorizontalListView {
             }
             while (indexToMakeVisible < 0) {
                 // Child to view is not attached yet.
-                addViewAbove(getChildAt(0), mFirstPosition);
+                addViewToLeft(getChildAt(0), mFirstPosition);
                 mFirstPosition--;
                 indexToMakeVisible = nextSelectedPosition - mFirstPosition;
             }
             final int positionToMakeVisible = mFirstPosition + indexToMakeVisible;
             final View viewToMakeVisible = getChildAt(indexToMakeVisible);
-            int goalTop = listTop;
+            int goalLeft = listLeft;
             if (positionToMakeVisible > 0) {
-                goalTop += getArrowScrollPreviewLength();
+                goalLeft += getArrowScrollPreviewLength();
             }
-            if (viewToMakeVisible.getTop() >= goalTop) {
+            if (viewToMakeVisible.getLeft() >= goalLeft) {
                 // item is fully visible.
                 return 0;
             }
 
             if (nextSelectedPosition != INVALID_POSITION &&
-                    (viewToMakeVisible.getBottom() - goalTop) >= getMaxScrollAmount()) {
+                    (viewToMakeVisible.getRight() - goalLeft) >= getMaxScrollAmount()) {
                 // item already has enough of it visible, changing selection is good enough
                 return 0;
             }
 
-            int amountToScroll = (goalTop - viewToMakeVisible.getTop());
+            int amountToScroll = (goalLeft - viewToMakeVisible.getLeft());
             if (mFirstPosition == 0) {
                 // first is first in list -> make sure we don't scroll past it
-                final int max = listTop - getChildAt(0).getTop();
+                final int max = listLeft - getChildAt(0).getLeft();
                 amountToScroll = Math.min(amountToScroll,  max);
             }
             return Math.min(amountToScroll, getMaxScrollAmount());
@@ -2792,25 +2792,25 @@ public class HorizontalListView extends AbsHorizontalListView {
             View oldFocus = selectedView.findFocus();
             newFocus = FocusFinder.getInstance().findNextFocus(this, oldFocus, direction);
         } else {
-            if (direction == View.FOCUS_DOWN) {
+            if (direction == View.FOCUS_RIGHT) {
                 final boolean topFadingEdgeShowing = (mFirstPosition > 0);
-                final int listTop = mListPadding.top +
+                final int listLeft = mListPadding.left +
                         (topFadingEdgeShowing ? getArrowScrollPreviewLength() : 0);
-                final int ySearchPoint =
-                        (selectedView != null && selectedView.getTop() > listTop) ?
-                                selectedView.getTop() :
-                                listTop;
-                mTempRect.set(0, ySearchPoint, 0, ySearchPoint);
+                final int xSearchPoint =
+                        (selectedView != null && selectedView.getLeft() > listLeft) ?
+                                selectedView.getLeft() :
+                                listLeft;
+                mTempRect.set(xSearchPoint, 0, xSearchPoint, 0);
             } else {
-                final boolean bottomFadingEdgeShowing =
+                final boolean rightFadingEdgeShowing =
                         (mFirstPosition + getChildCount() - 1) < mItemCount;
-                final int listBottom = getHeight() - mListPadding.bottom -
-                        (bottomFadingEdgeShowing ? getArrowScrollPreviewLength() : 0);
-                final int ySearchPoint =
-                        (selectedView != null && selectedView.getBottom() < listBottom) ?
-                                selectedView.getBottom() :
-                                listBottom;
-                mTempRect.set(0, ySearchPoint, 0, ySearchPoint);
+                final int listRight = getWidth() - mListPadding.right -
+                        (rightFadingEdgeShowing ? getArrowScrollPreviewLength() : 0);
+                final int xSearchPoint =
+                        (selectedView != null && selectedView.getRight() < listRight) ?
+                                selectedView.getRight() :
+                                listRight;
+                mTempRect.set(xSearchPoint, 0, xSearchPoint, 0);
             }
             newFocus = FocusFinder.getInstance().findNextFocusFromRect(this, mTempRect, direction);
         }
@@ -2823,8 +2823,8 @@ public class HorizontalListView extends AbsHorizontalListView {
             if (mSelectedPosition != INVALID_POSITION && positionOfNewFocus != mSelectedPosition) {
                 final int selectablePosition = lookForSelectablePositionOnScreen(direction);
                 if (selectablePosition != INVALID_POSITION &&
-                        ((direction == View.FOCUS_DOWN && selectablePosition < positionOfNewFocus) ||
-                        (direction == View.FOCUS_UP && selectablePosition > positionOfNewFocus))) {
+                        ((direction == View.FOCUS_RIGHT && selectablePosition < positionOfNewFocus) ||
+                        (direction == View.FOCUS_LEFT && selectablePosition > positionOfNewFocus))) {
                     return null;
                 }
             }
@@ -2891,17 +2891,17 @@ public class HorizontalListView extends AbsHorizontalListView {
         int amountToScroll = 0;
         newFocus.getDrawingRect(mTempRect);
         offsetDescendantRectToMyCoords(newFocus, mTempRect);
-        if (direction == View.FOCUS_UP) {
-            if (mTempRect.top < mListPadding.top) {
-                amountToScroll = mListPadding.top - mTempRect.top;
+        if (direction == View.FOCUS_LEFT) {
+            if (mTempRect.left < mListPadding.left) {
+                amountToScroll = mListPadding.left - mTempRect.left;
                 if (positionOfNewFocus > 0) {
                     amountToScroll += getArrowScrollPreviewLength();
                 }
             }
         } else {
-            final int listBottom = getHeight() - mListPadding.bottom;
-            if (mTempRect.bottom > listBottom) {
-                amountToScroll = mTempRect.bottom - listBottom;
+            final int listRight = getWidth() - mListPadding.right;
+            if (mTempRect.right > listRight) {
+                amountToScroll = mTempRect.right - listRight;
                 if (positionOfNewFocus < mItemCount - 1) {
                     amountToScroll += getArrowScrollPreviewLength();
                 }
@@ -2921,11 +2921,11 @@ public class HorizontalListView extends AbsHorizontalListView {
         int distance = 0;
         descendant.getDrawingRect(mTempRect);
         offsetDescendantRectToMyCoords(descendant, mTempRect);
-        final int listBottom = getBottom() - getTop() - mListPadding.bottom;
-        if (mTempRect.bottom < mListPadding.top) {
-            distance = mListPadding.top - mTempRect.bottom;
-        } else if (mTempRect.top > listBottom) {
-            distance = mTempRect.top - listBottom;
+        final int listRight = getRight() - getLeft() - mListPadding.right;
+        if (mTempRect.right < mListPadding.left) {
+            distance = mListPadding.left - mTempRect.right;
+        } else if (mTempRect.left > listRight) {
+            distance = mTempRect.left - listRight;
         }
         return distance;
     }
@@ -2938,10 +2938,10 @@ public class HorizontalListView extends AbsHorizontalListView {
      * @param amount The amount (positive or negative) to scroll.
      */
     private void scrollListItemsBy(int amount) {
-        offsetChildrenTopAndBottomUnhide(amount);
+        offsetChildrenLeftAndRightUnhide(amount);
 
-        final int listBottom = getHeight() - mListPadding.bottom;
-        final int listTop = mListPadding.top;
+        final int listRight = getWidth() - mListPadding.right;
+        final int listLeft = mListPadding.left;
         final RecycleBin recycleBin = mRecycler;
 
         if (amount < 0) {
@@ -2950,10 +2950,10 @@ public class HorizontalListView extends AbsHorizontalListView {
             // may need to pan views into the bottom space
             int numChildren = getChildCount();
             View last = getChildAt(numChildren - 1);
-            while (last.getBottom() < listBottom) {
+            while (last.getRight() < listRight) {
                 final int lastVisiblePosition = mFirstPosition + numChildren - 1;
                 if (lastVisiblePosition < mItemCount - 1) {
-                    last = addViewBelow(last, lastVisiblePosition);
+                    last = addViewToRight(last, lastVisiblePosition);
                     numChildren++;
                 } else {
                     break;
@@ -2963,13 +2963,13 @@ public class HorizontalListView extends AbsHorizontalListView {
             // may have brought in the last child of the list that is skinnier
             // than the fading edge, thereby leaving space at the end.  need
             // to shift back
-            if (last.getBottom() < listBottom) {
-                offsetChildrenTopAndBottomUnhide(listBottom - last.getBottom());
+            if (last.getRight() < listRight) {
+                offsetChildrenLeftAndRightUnhide(listRight - last.getRight());
             }
 
             // top views may be panned off screen
             View first = getChildAt(0);
-            while (first.getBottom() < listTop) {
+            while (first.getRight() < listLeft) {
                 LayoutParams layoutParams = (LayoutParams) first.getLayoutParams();
                 if (recycleBin.shouldRecycleViewType(layoutParams.viewType)) {
                     recycleBin.addScrapView(first, mFirstPosition);
@@ -2983,22 +2983,22 @@ public class HorizontalListView extends AbsHorizontalListView {
             View first = getChildAt(0);
 
             // may need to pan views into top
-            while ((first.getTop() > listTop) && (mFirstPosition > 0)) {
-                first = addViewAbove(first, mFirstPosition);
+            while ((first.getLeft() > listLeft) && (mFirstPosition > 0)) {
+                first = addViewToLeft(first, mFirstPosition);
                 mFirstPosition--;
             }
 
             // may have brought the very first child of the list in too far and
             // need to shift it back
-            if (first.getTop() > listTop) {
-                offsetChildrenTopAndBottomUnhide(listTop - first.getTop());
+            if (first.getLeft() > listLeft) {
+                offsetChildrenLeftAndRightUnhide(listLeft - first.getLeft());
             }
 
             int lastIndex = getChildCount() - 1;
             View last = getChildAt(lastIndex);
 
             // bottom view may be panned off screen
-            while (last.getTop() > listBottom) {
+            while (last.getLeft() > listRight) {
                 LayoutParams layoutParams = (LayoutParams) last.getLayoutParams();
                 if (recycleBin.shouldRecycleViewType(layoutParams.viewType)) {
                     recycleBin.addScrapView(last, mFirstPosition+lastIndex);
@@ -3009,20 +3009,20 @@ public class HorizontalListView extends AbsHorizontalListView {
         }
     }
 
-    private View addViewAbove(View theView, int position) {
+    private View addViewToLeft(View theView, int position) {
         int abovePosition = position - 1;
         View view = obtainView(abovePosition, mIsScrap);
-        int edgeOfNewChild = theView.getTop() - mDividerHeight;
-        setupChild(view, abovePosition, edgeOfNewChild, false, mListPadding.left,
+        int edgeOfNewChild = theView.getLeft() - mDividerWidth;
+        setupChild(view, abovePosition, edgeOfNewChild, false, mListPadding.top,
                 false, mIsScrap[0]);
         return view;
     }
 
-    private View addViewBelow(View theView, int position) {
+    private View addViewToRight(View theView, int position) {
         int belowPosition = position + 1;
         View view = obtainView(belowPosition, mIsScrap);
-        int edgeOfNewChild = theView.getBottom() + mDividerHeight;
-        setupChild(view, belowPosition, edgeOfNewChild, true, mListPadding.left,
+        int edgeOfNewChild = theView.getRight() + mDividerWidth;
+        setupChild(view, belowPosition, edgeOfNewChild, true, mListPadding.top,
                 false, mIsScrap[0]);
         return view;
     }
@@ -3054,15 +3054,15 @@ public class HorizontalListView extends AbsHorizontalListView {
                 hasOpaqueScrollbarsUnhide()) || super.isOpaque();
         if (retValue) {
             // only return true if the list items cover the entire area of the view
-            final int listTop = mListPadding != null ? mListPadding.top : getPaddingTop();
+            final int listLeft = mListPadding != null ? mListPadding.left : getPaddingLeft();
             View first = getChildAt(0);
-            if (first == null || first.getTop() > listTop) {
+            if (first == null || first.getLeft() > listLeft) {
                 return false;
             }
-            final int listBottom = getHeight() -
-                    (mListPadding != null ? mListPadding.bottom : getPaddingBottom());
+            final int listRight = getRight() -
+                    (mListPadding != null ? mListPadding.right : getPaddingRight());
             View last = getChildAt(getChildCount() - 1);
-            if (last == null || last.getBottom() < listBottom) {
+            if (last == null || last.getRight() < listRight) {
                 return false;
             }
         }
@@ -3083,14 +3083,14 @@ public class HorizontalListView extends AbsHorizontalListView {
     }
 
     void drawOverscrollHeader(Canvas canvas, Drawable drawable, Rect bounds) {
-        final int height = drawable.getMinimumHeight();
+        final int width = drawable.getMinimumWidth();
 
         canvas.save();
         canvas.clipRect(bounds);
 
-        final int span = bounds.bottom - bounds.top;
-        if (span < height) {
-            bounds.top = bounds.bottom - height;
+        final int span = bounds.right - bounds.left;
+        if (span < width) {
+            bounds.left = bounds.right - width;
         }
 
         drawable.setBounds(bounds);
@@ -3100,14 +3100,14 @@ public class HorizontalListView extends AbsHorizontalListView {
     }
 
     void drawOverscrollFooter(Canvas canvas, Drawable drawable, Rect bounds) {
-        final int height = drawable.getMinimumHeight();
+        final int width = drawable.getMinimumWidth();
 
         canvas.save();
         canvas.clipRect(bounds);
 
-        final int span = bounds.bottom - bounds.top;
-        if (span < height) {
-            bounds.bottom = bounds.top + height;
+        final int span = bounds.right - bounds.left;
+        if (span < width) {
+            bounds.right = bounds.left + width;
         }
 
         drawable.setBounds(bounds);
@@ -3123,18 +3123,18 @@ public class HorizontalListView extends AbsHorizontalListView {
         }
 
         // Draw the dividers
-        final int dividerHeight = mDividerHeight;
+        final int dividerWidth = mDividerWidth;
         final Drawable overscrollHeader = mOverScrollHeader;
         final Drawable overscrollFooter = mOverScrollFooter;
         final boolean drawOverscrollHeader = overscrollHeader != null;
         final boolean drawOverscrollFooter = overscrollFooter != null;
-        final boolean drawDividers = dividerHeight > 0 && mDivider != null;
+        final boolean drawDividers = dividerWidth > 0 && mDivider != null;
 
         if (drawDividers || drawOverscrollHeader || drawOverscrollFooter) {
             // Only modify the top and bottom in the loop, we set the left and right here
             final Rect bounds = mTempRect;
-            bounds.left = getPaddingLeft();
-            bounds.right = getRight() - getLeft() - getPaddingRight();
+            bounds.top = getPaddingTop();
+            bounds.bottom = getBottom() - getTop() - getPaddingBottom();
 
             final int count = getChildCount();
             final int headerCount = mHeaderViewInfos.size();
@@ -3157,30 +3157,30 @@ public class HorizontalListView extends AbsHorizontalListView {
             }
             final Paint paint = mDividerPaint;
 
-            int effectivePaddingTop = 0;
-            int effectivePaddingBottom = 0;
+            int effectivePaddingLeft = 0;
+            int effectivePaddingRight = 0;
             if (mClipToPadding) {
-                effectivePaddingTop = mListPadding.top;
-                effectivePaddingBottom = mListPadding.bottom;
+                effectivePaddingLeft = mListPadding.left;
+                effectivePaddingRight = mListPadding.right;
             }
 
-            final int viewBottom = getBottom();
-            final int viewTop = getTop();
-            final int scrollY = getScrollY();
+            final int viewLeft = getLeft();
+            final int viewRight = getRight();
+            final int scrollX = getScrollX();
 
-            final int listBottom = viewBottom - viewTop - effectivePaddingBottom + scrollY;
-            if (!mStackFromBottom) {
-                int bottom = 0;
+            final int listRight = viewLeft - viewRight - effectivePaddingRight + scrollX;
+            if (!mStackFromRight) {
+                int right = 0;
 
                 // Draw top divider or header for overscroll
-                if (count > 0 && scrollY < 0) {
+                if (count > 0 && scrollX < 0) {
                     if (drawOverscrollHeader) {
-                        bounds.bottom = 0;
-                        bounds.top = scrollY;
+                        bounds.right = 0;
+                        bounds.left = scrollX;
                         drawOverscrollHeader(canvas, overscrollHeader, bounds);
                     } else if (drawDividers) {
-                        bounds.bottom = 0;
-                        bounds.top = -dividerHeight;
+                        bounds.right = 0;
+                        bounds.left = -dividerWidth;
                         drawDivider(canvas, bounds, -1);
                     }
                 }
@@ -3189,40 +3189,40 @@ public class HorizontalListView extends AbsHorizontalListView {
                     if ((headerDividers || first + i >= headerCount) &&
                             (footerDividers || first + i < footerLimit)) {
                         View child = getChildAt(i);
-                        bottom = child.getBottom();
+                        right = child.getRight();
                         // Don't draw dividers next to items that are not enabled
 
                         if (drawDividers &&
-                                (bottom < listBottom && !(drawOverscrollFooter && i == count - 1))) {
+                                (right < listRight && !(drawOverscrollFooter && i == count - 1))) {
                             if ((areAllItemsSelectable ||
                                     (adapter.isEnabled(first + i) && (i == count - 1 ||
                                             adapter.isEnabled(first + i + 1))))) {
-                                bounds.top = bottom;
-                                bounds.bottom = bottom + dividerHeight;
+                                bounds.left = right;
+                                bounds.right = right + dividerWidth;
                                 drawDivider(canvas, bounds, i);
                             } else if (fillForMissingDividers) {
-                                bounds.top = bottom;
-                                bounds.bottom = bottom + dividerHeight;
+                                bounds.left = right;
+                                bounds.right = right + dividerWidth;
                                 canvas.drawRect(bounds, paint);
                             }
                         }
                     }
                 }
 
-                final int overFooterBottom = viewBottom + scrollY;
+                final int overFooterRight = viewLeft + scrollX;
                 if (drawOverscrollFooter && first + count == itemCount &&
-                        overFooterBottom > bottom) {
-                    bounds.top = bottom;
-                    bounds.bottom = overFooterBottom;
+                        overFooterRight > right) {
+                    bounds.left = right;
+                    bounds.right = overFooterRight;
                     drawOverscrollFooter(canvas, overscrollFooter, bounds);
                 }
             } else {
-                int top;
+                int left;
 
 
                 if (count > 0 && drawOverscrollHeader) {
-                    bounds.top = scrollY;
-                    bounds.bottom = getChildAt(0).getTop();
+                    bounds.left = scrollX;
+                    bounds.right = getChildAt(0).getLeft();
                     drawOverscrollHeader(canvas, overscrollHeader, bounds);
                 }
 
@@ -3231,37 +3231,37 @@ public class HorizontalListView extends AbsHorizontalListView {
                     if ((headerDividers || first + i >= headerCount) &&
                             (footerDividers || first + i < footerLimit)) {
                         View child = getChildAt(i);
-                        top = child.getTop();
+                        left = child.getLeft();
                         // Don't draw dividers next to items that are not enabled
-                        if (top > effectivePaddingTop) {
+                        if (left > effectivePaddingLeft) {
                             if ((areAllItemsSelectable ||
                                     (adapter.isEnabled(first + i) && (i == count - 1 ||
                                             adapter.isEnabled(first + i + 1))))) {
-                                bounds.top = top - dividerHeight;
-                                bounds.bottom = top;
+                                bounds.left = left - dividerWidth;
+                                bounds.right = left;
                                 // Give the method the child ABOVE the divider, so we
                                 // subtract one from our child
                                 // position. Give -1 when there is no child above the
                                 // divider.
                                 drawDivider(canvas, bounds, i - 1);
                             } else if (fillForMissingDividers) {
-                                bounds.top = top - dividerHeight;
-                                bounds.bottom = top;
+                                bounds.left = left - dividerWidth;
+                                bounds.right = left;
                                 canvas.drawRect(bounds, paint);
                             }
                         }
                     }
                 }
 
-                if (count > 0 && scrollY > 0) {
+                if (count > 0 && scrollX > 0) {
                     if (drawOverscrollFooter) {
-                        final int absListBottom = viewBottom;
-                        bounds.top = absListBottom;
-                        bounds.bottom = absListBottom + scrollY;
+                        final int absListRight = viewLeft;
+                        bounds.left = absListRight;
+                        bounds.right = absListRight + scrollX;
                         drawOverscrollFooter(canvas, overscrollFooter, bounds);
                     } else if (drawDividers) {
-                        bounds.top = listBottom;
-                        bounds.bottom = listBottom + dividerHeight;
+                        bounds.left = listRight;
+                        bounds.right = listRight + dividerWidth;
                         drawDivider(canvas, bounds, -1);
                     }
                 }
@@ -3311,15 +3311,15 @@ public class HorizontalListView extends AbsHorizontalListView {
 
     /**
      * Sets the drawable that will be drawn between each item in the list. If the drawable does
-     * not have an intrinsic height, you should also call {@link #setDividerHeight(int)}
+     * not have an intrinsic width, you should also call {@link #setDividerWidth(int)}
      *
      * @param divider The drawable to use.
      */
     public void setDivider(Drawable divider) {
         if (divider != null) {
-            mDividerHeight = divider.getIntrinsicHeight();
+            mDividerWidth = divider.getIntrinsicWidth();
         } else {
-            mDividerHeight = 0;
+            mDividerWidth = 0;
         }
         mDivider = divider;
         mDividerIsOpaque = divider == null || divider.getOpacity() == PixelFormat.OPAQUE;
@@ -3328,20 +3328,20 @@ public class HorizontalListView extends AbsHorizontalListView {
     }
 
     /**
-     * @return Returns the height of the divider that will be drawn between each item in the list.
+     * @return Returns the width of the divider that will be drawn between each item in the list.
      */
-    public int getDividerHeight() {
-        return mDividerHeight;
+    public int getDividerWidth() {
+        return mDividerWidth;
     }
 
     /**
-     * Sets the height of the divider that will be drawn between each item in the list. Calling
-     * this will override the intrinsic height as set by {@link #setDivider(android.graphics.drawable.Drawable)}
+     * Sets the width of the divider that will be drawn between each item in the list. Calling
+     * this will override the intrinsic width as set by {@link #setDivider(android.graphics.drawable.Drawable)}
      *
-     * @param height The new height of the divider in pixels.
+     * @param width The new width of the divider in pixels.
      */
-    public void setDividerHeight(int height) {
-        mDividerHeight = height;
+    public void setDividerWidth(int width) {
+        mDividerWidth = width;
         requestLayout();
         invalidate();
     }
@@ -3380,8 +3380,8 @@ public class HorizontalListView extends AbsHorizontalListView {
      */
     public void setOverscrollHeader(Drawable header) {
         mOverScrollHeader = header;
-        final int scrollY = getScrollY();
-        if (scrollY < 0) {
+        final int scrollX = getScrollX();
+        if (scrollX < 0) {
             invalidate();
         }
     }
@@ -3418,7 +3418,7 @@ public class HorizontalListView extends AbsHorizontalListView {
 
         final ListAdapter adapter = mAdapter;
         int closetChildIndex = -1;
-        int closestChildTop = 0;
+        int closestChildLeft = 0;
         if (adapter != null && gainFocus && previouslyFocusedRect != null) {
             final int scrollX = getScrollX();
             final int scrollY = getScrollY();
@@ -3452,13 +3452,13 @@ public class HorizontalListView extends AbsHorizontalListView {
                 if (distance < minDistance) {
                     minDistance = distance;
                     closetChildIndex = i;
-                    closestChildTop = other.getTop();
+                    closestChildLeft = other.getLeft();
                 }
             }
         }
 
         if (closetChildIndex >= 0) {
-            setSelectionFromTop(closetChildIndex + mFirstPosition, closestChildTop);
+            setSelectionFromLeft(closetChildIndex + mFirstPosition, closestChildLeft);
         } else {
             requestLayout();
         }

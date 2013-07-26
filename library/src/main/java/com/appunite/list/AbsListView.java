@@ -40,7 +40,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
-import android.util.StateSet;
+
 import com.actionbarsherlock.view.ActionMode;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
@@ -48,8 +48,6 @@ import android.view.HapticFeedbackConstants;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -93,7 +91,7 @@ import java.util.List;
  * @attr ref android.R.styleable#AbsListView_smoothScrollbar
  * @attr ref android.R.styleable#AbsListView_choiceMode
  */
-public abstract class AbsListView extends SuperListView implements TextWatcher,
+public abstract class AbsListView extends AdapterView<ListAdapter> implements TextWatcher,
         ViewTreeObserver.OnGlobalLayoutListener, Filter.FilterListener,
         ViewTreeObserver.OnTouchModeChangeListener {
 
@@ -481,7 +479,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
     int mOverscrollMax;
 
     /**
-     * Content height divided by this is the overscroll limit.
+     * Content width divided by this is the overscroll limit.
      */
     static final int OVERSCROLL_LIMIT_DIVISOR = 3;
 
@@ -1285,7 +1283,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
     /**
      * When smooth scrollbar is enabled, the position and size of the scrollbar thumb
      * is computed based on the number of visible pixels in the visible items. This
-     * however assumes that all list items have the same height. If you use a list in
+     * however assumes that all list items have the same width. If you use a list in
      * which items have different heights, the scrollbar will change appearance as the
      * user scrolls through the list. To avoid this issue, you need to disable this
      * property.
@@ -1590,9 +1588,9 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
                     + Integer.toHexString(System.identityHashCode(this))
                     + " selectedId=" + selectedId
                     + " firstId=" + firstId
-                    + " viewTop=" + viewTop
+                    + " viewLeft=" + viewTop
                     + " position=" + position
-                    + " height=" + height
+                    + " width=" + height
                     + " filter=" + filter
                     + " checkState=" + checkState + "}";
         }
@@ -3106,8 +3104,7 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
 
                         int overscroll = -incrementalDeltaY -
                                 (motionViewRealTop - motionViewPrevTop);
-                        overScrollBy(0, overscroll, 0, scrollY, 0, 0,
-                                0, mOverscrollDistance, true);
+                        overScrollBy(0, overscroll, 0, scrollY, 0, 0, 0, mOverscrollDistance, true);
                         if (Math.abs(mOverscrollDistance) == Math.abs(scrollY)) {
                             // Don't allow overfling if we're at the edge.
                             if (mVelocityTracker != null) {
@@ -5319,11 +5316,11 @@ public abstract class AbsListView extends SuperListView implements TextWatcher,
                                 mSyncPosition = newPos;
 
                                 if (mSyncHeight == getHeight()) {
-                                    // If we are at the same height as when we saved state, try
+                                    // If we are at the same width as when we saved state, try
                                     // to restore the scroll position too.
                                     mLayoutMode = LAYOUT_SYNC;
                                 } else {
-                                    // We are not the same height as when the selection was saved, so
+                                    // We are not the same width as when the selection was saved, so
                                     // don't try to restore the exact position
                                     mLayoutMode = LAYOUT_SET_SELECTION;
                                 }

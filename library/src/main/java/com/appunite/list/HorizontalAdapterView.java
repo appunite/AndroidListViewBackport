@@ -27,7 +27,6 @@ import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.ActionMode;
-import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MotionEvent;
 import android.view.SoundEffectConstants;
@@ -45,10 +44,10 @@ import com.actionbarsherlock.internal.view.menu.MenuWrapper;
 import com.actionbarsherlock.view.MenuInflater;
 
 /**
- * An AdapterView is a view whose children are determined by an {@link Adapter}.
+ * An AdapterView is a view whose children are determined by an {@link android.widget.Adapter}.
  *
  * <p>
- * See {@link ListView}, {@link android.widget.GridView}, {@link android.widget.Spinner} and
+ * See {@link com.appunite.list.ListView}, {@link android.widget.GridView}, {@link android.widget.Spinner} and
  *      {@link android.widget.Gallery} for commonly used subclasses of AdapterView.
  *
  * <div class="special reference">
@@ -57,16 +56,16 @@ import com.actionbarsherlock.view.MenuInflater;
  * <a href="{@docRoot}guide/topics/ui/binding.html">Binding to Data with AdapterView</a>
  * developer guide.</p></div>
  */
-public abstract class AdapterView<T extends Adapter> extends ViewGroup {
+public abstract class HorizontalAdapterView<T extends Adapter> extends ViewGroup {
 
     /**
-     * The item view type returned by {@link Adapter#getItemViewType(int)} when
+     * The item view type returned by {@link android.widget.Adapter#getItemViewType(int)} when
      * the adapter does not want the item's view recycled.
      */
     public static final int ITEM_VIEW_TYPE_IGNORE = -1;
 
     /**
-     * The item view type returned by {@link Adapter#getItemViewType(int)} when
+     * The item view type returned by {@link android.widget.Adapter#getItemViewType(int)} when
      * the item is a header or footer.
      */
     public static final int ITEM_VIEW_TYPE_HEADER_OR_FOOTER = -2;
@@ -81,25 +80,25 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
      * The offset in pixels from the top of the AdapterView to the top
      * of the view to select during the next layout.
      */
-    int mSpecificTop;
+    int mSpecificLeft;
 
     /**
-     * Position from which to start looking for mSyncRowId
+     * Position from which to start looking for mSyncColId
      */
     int mSyncPosition;
 
     /**
      * Row id to look for when data has changed
      */
-    long mSyncRowId = INVALID_ROW_ID;
+    long mSyncColId = INVALID_COL_ID;
 
     /**
-     * Height of the view when mSyncPosition and mSyncRowId where set
+     * Height of the view when mSyncPosition and mSyncColId where set
      */
-    long mSyncHeight;
+    long mSyncWidth;
 
     /**
-     * True if we need to sync to mSyncRowId
+     * True if we need to sync to mSyncColId
      */
     boolean mNeedSync = false;
 
@@ -113,7 +112,7 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
     /**
      * Our width after the last layout
      */
-    private int mLayoutHeight;
+    private int mLayoutWidth;
 
     /**
      * Sync based on the selected child
@@ -165,7 +164,7 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
     /**
      * The item id of the item to select during the next layout.
      */
-    long mNextSelectedRowId = INVALID_ROW_ID;
+    long mNextSelectedColId = INVALID_COL_ID;
 
     /**
      * The position within the adapter's data set of the currently selected item.
@@ -176,7 +175,7 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
     /**
      * The item id of the currently selected item.
      */
-    long mSelectedRowId = INVALID_ROW_ID;
+    long mSelectedColId = INVALID_COL_ID;
 
     /**
      * View to show if there are no items to show.
@@ -203,17 +202,17 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
     /**
      * Represents an empty or invalid row id
      */
-    public static final long INVALID_ROW_ID = Long.MIN_VALUE;
+    public static final long INVALID_COL_ID = Long.MIN_VALUE;
 
     /**
      * The last selected position we used when notifying
      */
     int mOldSelectedPosition = INVALID_POSITION;
-    
+
     /**
      * The id of the last selected position we used when notifying
      */
-    long mOldSelectedRowId = INVALID_ROW_ID;
+    long mOldSelectedColId = INVALID_COL_ID;
 
     /**
      * Indicates what focusable state is requested when calling setFocusable().
@@ -246,15 +245,15 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
     private float mVerticalScrollFactor = 0.0f;
     private float mHorizontalScrollFactor = 0.0f;
 
-    public AdapterView(Context context) {
+    public HorizontalAdapterView(Context context) {
         super(context);
     }
 
-    public AdapterView(Context context, AttributeSet attrs) {
+    public HorizontalAdapterView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public AdapterView(Context context, AttributeSet attrs, int defStyle) {
+    public HorizontalAdapterView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
         setImportantAccessibility();
@@ -289,7 +288,7 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
          * @param position The position of the view in the adapter.
          * @param id The row id of the item that was clicked.
          */
-        void onItemClick(AdapterView<?> parent, View view, int position, long id);
+        void onItemClick(HorizontalAdapterView<?> parent, View view, int position, long id);
     }
 
     /**
@@ -351,7 +350,7 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
          *
          * @return true if the callback consumed the long click, false otherwise
          */
-        boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id);
+        boolean onItemLongClick(HorizontalAdapterView<?> parent, View view, int position, long id);
     }
 
 
@@ -395,7 +394,7 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
          * @param position The position of the view in the adapter
          * @param id The row id of the item that is selected
          */
-        void onItemSelected(AdapterView<?> parent, View view, int position, long id);
+        void onItemSelected(HorizontalAdapterView<?> parent, View view, int position, long id);
 
         /**
          * Callback method to be invoked when the selection disappears from this
@@ -404,7 +403,7 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
          *
          * @param parent The AdapterView that now contains no selected item.
          */
-        void onNothingSelected(AdapterView<?> parent);
+        void onNothingSelected(HorizontalAdapterView<?> parent);
     }
 
 
@@ -424,11 +423,11 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
 
     /**
      * Extra menu information provided to the
-     * {@link android.view.View.OnCreateContextMenuListener#onCreateContextMenu(ContextMenu, View, ContextMenuInfo) }
+     * {@link android.view.View.OnCreateContextMenuListener#onCreateContextMenu(android.view.ContextMenu, android.view.View, android.view.ContextMenu.ContextMenuInfo) }
      * callback when a context menu is brought up for this AdapterView.
      *
      */
-    public static class AdapterContextMenuInfo implements ContextMenu.ContextMenuInfo {
+    public static class AdapterContextMenuInfo implements ContextMenuInfo {
 
         public AdapterContextMenuInfo(View targetView, int position, long id) {
             this.targetView = targetView;
@@ -559,7 +558,7 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        mLayoutHeight = getHeight();
+        mLayoutWidth = getWidth();
     }
 
     /**
@@ -573,12 +572,12 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
     }
 
     /**
-     * @return The id corresponding to the currently selected item, or {@link #INVALID_ROW_ID}
+     * @return The id corresponding to the currently selected item, or {@link #INVALID_COL_ID}
      * if nothing is selected.
      */
     @ViewDebug.CapturedViewProperty
     public long getSelectedItemId() {
-        return mNextSelectedRowId;
+        return mNextSelectedColId;
     }
 
     /**
@@ -806,7 +805,7 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
 
     public long getItemIdAtPosition(int position) {
         T adapter = getAdapter();
-        return (adapter == null || position < 0) ? INVALID_ROW_ID : adapter.getItemId(position);
+        return (adapter == null || position < 0) ? INVALID_COL_ID : adapter.getItemId(position);
     }
 
     @Override
@@ -843,9 +842,9 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
 
             // Detect the case where a cursor that was previously invalidated has
             // been repopulated with new data.
-            if (AdapterView.this.getAdapter().hasStableIds() && mInstanceState != null
+            if (HorizontalAdapterView.this.getAdapter().hasStableIds() && mInstanceState != null
                     && mOldItemCount == 0 && mItemCount > 0) {
-                AdapterView.this.onRestoreInstanceState(mInstanceState);
+                HorizontalAdapterView.this.onRestoreInstanceState(mInstanceState);
                 mInstanceState = null;
             } else {
                 rememberSyncState();
@@ -858,19 +857,19 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
         public void onInvalidated() {
             mDataChanged = true;
 
-            if (AdapterView.this.getAdapter().hasStableIds()) {
+            if (HorizontalAdapterView.this.getAdapter().hasStableIds()) {
                 // Remember the current state for the case where our hosting activity is being
                 // stopped and later restarted
-                mInstanceState = AdapterView.this.onSaveInstanceState();
+                mInstanceState = HorizontalAdapterView.this.onSaveInstanceState();
             }
 
             // Data is invalid so we should reset our state
             mOldItemCount = mItemCount;
             mItemCount = 0;
             mSelectedPosition = INVALID_POSITION;
-            mSelectedRowId = INVALID_ROW_ID;
+            mSelectedColId = INVALID_COL_ID;
             mNextSelectedPosition = INVALID_POSITION;
-            mNextSelectedRowId = INVALID_ROW_ID;
+            mNextSelectedColId = INVALID_COL_ID;
             mNeedSync = false;
 
             checkFocus();
@@ -986,7 +985,7 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
     @Override
     public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
         super.onInitializeAccessibilityNodeInfo(info);
-        info.setClassName(AdapterView.class.getName());
+        info.setClassName(HorizontalAdapterView.class.getName());
         info.setScrollable(isScrollableForAccessibility());
         View selectedView = getSelectedView();
         if (selectedView != null) {
@@ -998,7 +997,7 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
     @Override
     public void onInitializeAccessibilityEvent(AccessibilityEvent event) {
         super.onInitializeAccessibilityEvent(event);
-        event.setClassName(AdapterView.class.getName());
+        event.setClassName(HorizontalAdapterView.class.getName());
         event.setScrollable(isScrollableForAccessibility());
         View selectedView = getSelectedView();
         if (selectedView != null) {
@@ -1080,9 +1079,9 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
         if (!found) {
             // Nothing is selected
             mSelectedPosition = INVALID_POSITION;
-            mSelectedRowId = INVALID_ROW_ID;
+            mSelectedColId = INVALID_COL_ID;
             mNextSelectedPosition = INVALID_POSITION;
-            mNextSelectedRowId = INVALID_ROW_ID;
+            mNextSelectedColId = INVALID_COL_ID;
             mNeedSync = false;
             checkSelectionChanged();
         }
@@ -1093,19 +1092,19 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
     }
 
     void checkSelectionChanged() {
-        if ((mSelectedPosition != mOldSelectedPosition) || (mSelectedRowId != mOldSelectedRowId)) {
+        if ((mSelectedPosition != mOldSelectedPosition) || (mSelectedColId != mOldSelectedColId)) {
             selectionChanged();
             mOldSelectedPosition = mSelectedPosition;
-            mOldSelectedRowId = mSelectedRowId;
+            mOldSelectedColId = mSelectedColId;
         }
     }
 
     /**
-     * Searches the adapter for a position matching mSyncRowId. The search starts at mSyncPosition
+     * Searches the adapter for a position matching mSyncColId. The search starts at mSyncPosition
      * and then alternates between moving up and moving down until 1) we find the right position, or
      * 2) we run out of time, or 3) we have looked at every position
      *
-     * @return Position of the row that matches mSyncRowId, or {@link #INVALID_POSITION} if it can't
+     * @return Position of the row that matches mSyncColId, or {@link #INVALID_POSITION} if it can't
      *         be found
      */
     int findSyncPosition() {
@@ -1115,11 +1114,11 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
             return INVALID_POSITION;
         }
 
-        long idToMatch = mSyncRowId;
+        long idToMatch = mSyncColId;
         int seed = mSyncPosition;
 
         // If there isn't a selection don't hunt for it
-        if (idToMatch == INVALID_ROW_ID) {
+        if (idToMatch == INVALID_COL_ID) {
             return INVALID_POSITION;
         }
 
@@ -1129,7 +1128,7 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
 
         long endTime = SystemClock.uptimeMillis() + SYNC_MAX_DURATION_MILLIS;
 
-        long rowId;
+        long colId;
 
         // first position scanned so far
         int first = seed;
@@ -1154,8 +1153,8 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
         }
 
         while (SystemClock.uptimeMillis() <= endTime) {
-            rowId = adapter.getItemId(seed);
-            if (rowId == idToMatch) {
+            colId = adapter.getItemId(seed);
+            if (colId == idToMatch) {
                 // Found it!
                 return seed;
             }
@@ -1200,26 +1199,26 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
     }
 
     /**
-     * Utility to keep mSelectedPosition and mSelectedRowId in sync
+     * Utility to keep mSelectedPosition and mSelectedColId in sync
      * @param position Our current position
      */
     void setSelectedPositionInt(int position) {
         mSelectedPosition = position;
-        mSelectedRowId = getItemIdAtPosition(position);
+        mSelectedColId = getItemIdAtPosition(position);
     }
 
     /**
-     * Utility to keep mNextSelectedPosition and mNextSelectedRowId in sync
+     * Utility to keep mNextSelectedPosition and mNextSelectedColId in sync
      * @param position Intended value for mSelectedPosition the next time we go
      * through layout
      */
     void setNextSelectedPositionInt(int position) {
         mNextSelectedPosition = position;
-        mNextSelectedRowId = getItemIdAtPosition(position);
+        mNextSelectedColId = getItemIdAtPosition(position);
         // If we are trying to sync to the selection, update that too
         if (mNeedSync && mSyncMode == SYNC_SELECTED_POSITION && position >= 0) {
             mSyncPosition = position;
-            mSyncRowId = mNextSelectedRowId;
+            mSyncColId = mNextSelectedColId;
         }
     }
 
@@ -1231,14 +1230,14 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
     void rememberSyncState() {
         if (getChildCount() > 0) {
             mNeedSync = true;
-            mSyncHeight = mLayoutHeight;
+            mSyncWidth = mLayoutWidth;
             if (mSelectedPosition >= 0) {
                 // Sync the selection state
                 View v = getChildAt(mSelectedPosition - mFirstPosition);
-                mSyncRowId = mNextSelectedRowId;
+                mSyncColId = mNextSelectedColId;
                 mSyncPosition = mNextSelectedPosition;
                 if (v != null) {
-                    mSpecificTop = v.getTop();
+                    mSpecificLeft = v.getLeft();
                 }
                 mSyncMode = SYNC_SELECTED_POSITION;
             } else {
@@ -1246,13 +1245,13 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
                 View v = getChildAt(0);
                 T adapter = getAdapter();
                 if (mFirstPosition >= 0 && mFirstPosition < adapter.getCount()) {
-                    mSyncRowId = adapter.getItemId(mFirstPosition);
+                    mSyncColId = adapter.getItemId(mFirstPosition);
                 } else {
-                    mSyncRowId = NO_ID;
+                    mSyncColId = NO_ID;
                 }
                 mSyncPosition = mFirstPosition;
                 if (v != null) {
-                    mSpecificTop = v.getTop();
+                    mSpecificLeft = v.getLeft();
                 }
                 mSyncMode = SYNC_FIRST_POSITION;
             }
@@ -1376,7 +1375,7 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
             final int childCount = viewGroup.getChildCount();
             for (int i = 0; i < childCount; ++i) {
                 final View childAt = viewGroup.getChildAt(i);
-                AdapterView.dispatchStartTemporaryDetach(childAt);
+                HorizontalAdapterView.dispatchStartTemporaryDetach(childAt);
             }
         }
     }
@@ -1429,19 +1428,19 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    private class ActionModeCallbackWrapper implements android.view.ActionMode.Callback {
-        private AdapterView<?> mAdapterView;
+    private class ActionModeCallbackWrapper implements ActionMode.Callback {
+        private HorizontalAdapterView<?> mAdapterView;
         private final com.actionbarsherlock.view.ActionMode.Callback mCallback;
         private ActionModeWrapper mActionModeWrapper;
 
-        public ActionModeCallbackWrapper(AdapterView<?> adapterView,
+        public ActionModeCallbackWrapper(HorizontalAdapterView<?> adapterView,
                                          com.actionbarsherlock.view.ActionMode.Callback callback) {
             mAdapterView = adapterView;
             mCallback = callback;
         }
 
         @Override
-        public boolean onCreateActionMode(android.view.ActionMode mode, android.view.Menu menu) {
+        public boolean onCreateActionMode(ActionMode mode, android.view.Menu menu) {
             //See ActionBarSherlockNative#startActionMode
             mActionMode = mActionModeWrapper = new ActionModeWrapper(mAdapterView, mode);
 
@@ -1449,30 +1448,30 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
         }
 
         @Override
-        public boolean onPrepareActionMode(android.view.ActionMode mode, android.view.Menu menu) {
+        public boolean onPrepareActionMode(ActionMode mode, android.view.Menu menu) {
             return mCallback.onPrepareActionMode(mActionMode, mActionMode.getMenu());
         }
 
         @Override
-        public boolean onActionItemClicked(android.view.ActionMode mode,
+        public boolean onActionItemClicked(ActionMode mode,
                                            android.view.MenuItem item) {
             return mCallback.onActionItemClicked(mActionMode,
                     mActionModeWrapper.getMenu().findItem(item));
         }
 
         @Override
-        public void onDestroyActionMode(android.view.ActionMode mode) {
+        public void onDestroyActionMode(ActionMode mode) {
             mCallback.onDestroyActionMode(mActionMode);
         }
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     private static class ActionModeWrapper extends com.actionbarsherlock.view.ActionMode {
-        private final android.view.ActionMode mActionMode;
+        private final ActionMode mActionMode;
         private MenuWrapper mMenu = null;
-        private final AdapterView<?> mAdapterView;
+        private final HorizontalAdapterView<?> mAdapterView;
 
-        public ActionModeWrapper(AdapterView<?> adapterView, ActionMode mode) {
+        public ActionModeWrapper(HorizontalAdapterView<?> adapterView, ActionMode mode) {
             mAdapterView = adapterView;
             mActionMode = mode;
         }
