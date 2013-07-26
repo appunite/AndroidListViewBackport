@@ -16,6 +16,7 @@ repositories {
 dependencies {
     compile project(":library")
     //compile "com.appunite:listviewbackport:1.0"
+    compile "com.appunite:actionbarsherlock:4.1"
 }
 
 android {

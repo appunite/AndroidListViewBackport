@@ -22,6 +22,7 @@ public class MainActivity extends SherlockActivity {
         setContentView(R.layout.main_activity);
 
         final ListView listView = (ListView) findViewById(android.R.id.list);
+
         List<HashMap<String, String>> data = new ArrayList<HashMap<String, String>>();
         for (int i = 0; i < 100; ++i) {
             final HashMap<String,String> map = Maps.newHashMap();
