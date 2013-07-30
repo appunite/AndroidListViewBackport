@@ -3545,10 +3545,10 @@ public abstract class AbsHorizontalListView extends HorizontalAdapterView<ListAd
                 final int bottomPadding = mListPadding.bottom + mGlowPaddingBottom;
                 final int height = getHeight() - topPadding - bottomPadding;
 
-                // TODO we need rotation here (j.m.)
                 int edgeX = Math.min(0, scrollX + mFirstPositionDistanceGuess);
-                canvas.translate(edgeX, topPadding);
-                mEdgeGlowLeft.setSize(height, getHeight());
+                canvas.translate(edgeX, height + topPadding);
+                canvas.rotate(-90, 0, 0);
+                mEdgeGlowLeft.setSize(height, getWidth());
                 if (mEdgeGlowLeft.draw(canvas)) {
                     needsInvalidate = true;
                 }
@@ -3561,11 +3561,12 @@ public abstract class AbsHorizontalListView extends HorizontalAdapterView<ListAd
                 final int height = getHeight() - topPadding - bottomPadding;
                 final int width = getWidth();
 
-                int edgeY = -height + topPadding;
+                int edgeY = topPadding;
                 int edgeX = Math.max(width, scrollX + mLastPositionDistanceGuess);
-                canvas.translate(edgeY, edgeX);
-                canvas.rotate(180, height, 0);
-                // TODO we need rotation here (j.m.)
+
+                canvas.translate(edgeX, edgeY);
+                canvas.rotate(90, 0, 0);
+
                 mEdgeGlowRight.setSize(height, width);
                 if (mEdgeGlowRight.draw(canvas)) {
                     needsInvalidate = true;
