@@ -2986,7 +2986,7 @@ public abstract class AbsHorizontalListView extends HorizontalAdapterView<ListAd
                         int overscroll = -incrementalDeltaX -
                                 (motionViewRealLeft - motionViewPrevLeft);
 
-                        overScrollBy(overscroll, 0, scrollX, 0, 0, 0, mOverflingDistance, 0, true);
+                        overScrollBy(overscroll, 0, scrollX, 0, 0, 0, mOverscrollDistance, 0, true);
                         if (Math.abs(mOverscrollDistance) == Math.abs(scrollX)) {
                             // Don't allow overfling if we're at the edge.
                             if (mVelocityTracker != null) {
