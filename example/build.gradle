@@ -10,7 +10,7 @@ apply plugin: 'android'
 
 repositories {
     mavenCentral()
-    maven { url "http://192.158.30.128/repository/" }
+    maven {url 'http://commondatastorage.googleapis.com/maven-repository/'}
 }
 
 dependencies {

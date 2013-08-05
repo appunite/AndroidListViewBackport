@@ -1,5 +1,6 @@
 buildscript {
     repositories {
+        maven {url 'https://commondatastorage.googleapis.com/maven-repository/'}
         mavenCentral()
     }
     dependencies {
@@ -11,8 +12,8 @@ apply plugin: 'android-library'
 apply plugin: 'maven'
 
 repositories {
+    maven {url 'http://commondatastorage.googleapis.com/maven-repository/'}
     mavenCentral()
-    maven { url "http://192.158.30.128/repository/" }
 }
 
 configurations {
@@ -20,12 +21,23 @@ configurations {
 }
 
 dependencies {
-    deployerJars "org.apache.maven.wagon:wagon-ssh:2.2"
+    deployerJars 'com.googlesource.gerrit:gs-maven-wagon:3.3.1'
     compile "com.google.guava:guava:14.0.1"
     compile "com.appunite:actionbarsherlock:4.1"
+    compile fileTree(dir: 'libs', include: '*.jar')
 }
 
-version = "1.0"
+def baseVersionName = "1.0"
+if (project.hasProperty("versionSuffix")) {
+    project.ext.versionSuffix = project.versionSuffix
+} else {
+    project.ext.versionSuffix = "snapshot"
+}
+if (project.ext.versionSuffix) {
+    version = "${baseVersionName}-${project.versionSuffix}"
+} else {
+    version = "${baseVersionName}"
+}
 archivesBaseName = "listviewbackport"
 group = "com.appunite"
 
@@ -79,14 +91,23 @@ task install(type: Upload, dependsOn: createPomFile) {
     }
 }
 
+
+Properties props = new Properties()
+def credentialsProperties = file("credentials.properties")
+if (credentialsProperties.exists()) {
+        props.load(new FileInputStream(credentialsProperties))
+}
+
 uploadArchives {
     description = "Upload archives to maven repository"
     dependsOn createPomFile
     repositories {
         mavenDeployer {
             configuration = configurations.deployerJars
-            repository(url: "sftp://mavenrepo@192.158.30.128/repository/") {
-                authentication(userName: "mavenrepo")
+            repository(url: "gs://maven-repository") {
+                authentication(
+                userName: "${props.getProperty('mavenUser', null)}" ,
+                password: "${props.getProperty('mavenPassword', null)}")
             }
             pom = project.ext.pomFile
         }
