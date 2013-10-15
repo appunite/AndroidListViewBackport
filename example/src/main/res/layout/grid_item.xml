@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+          android:layout_width="80dp"
+          android:maxLines="10"
+          android:id="@android:id/text1"
+          android:layout_height="80dp">
+</TextView>

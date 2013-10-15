@@ -27,6 +27,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.support.v4.view.MotionEventCompat;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -188,7 +189,7 @@ class FastScroller {
 
     public void setScrollbarPosition(int position) {
         if (position == View.SCROLLBAR_POSITION_DEFAULT) {
-            position = mList.isLayoutRtlUnhide() ?
+            position = Compat.isLayoutRtl(mList) ?
                     View.SCROLLBAR_POSITION_LEFT : View.SCROLLBAR_POSITION_RIGHT;
         }
         mPosition = position;
@@ -711,7 +712,7 @@ class FastScroller {
     }
 
     boolean onInterceptTouchEvent(MotionEvent ev) {
-        switch (ev.getActionMasked()) {
+        switch (MotionEventCompat.getActionMasked(ev)) {
             case MotionEvent.ACTION_DOWN:
                 if (mState > STATE_NONE && isPointInside(ev.getX(), ev.getY())) {
                     if (!mList.isInScrollingContainerUnhide()) {

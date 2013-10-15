@@ -1265,17 +1265,6 @@ public abstract class AdapterView<T extends Adapter> extends ViewGroup {
     }
 
     // Unhide View method (j.m.)
-//    @ViewDebug.ExportedProperty(category = "layout")
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
-    public boolean isLayoutRtlUnhide() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            return (getLayoutDirection() == LAYOUT_DIRECTION_RTL);
-        } else {
-            return true;
-        }
-    }
-
-    // Unhide View method (j.m.)
     @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     public boolean isInScrollingContainerUnhide() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {

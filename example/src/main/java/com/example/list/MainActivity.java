@@ -26,6 +26,7 @@ public class MainActivity extends SherlockActivity implements View.OnClickListen
         setContentView(R.layout.main_activity);
         findViewById(R.id.button_horizontal_list).setOnClickListener(this);
         findViewById(R.id.button_vertical_list).setOnClickListener(this);
+        findViewById(R.id.button_grid_view).setOnClickListener(this);
     }
 
     @Override
@@ -37,6 +38,9 @@ public class MainActivity extends SherlockActivity implements View.OnClickListen
                 return;
             case R.id.button_vertical_list:
                 startActivity(new Intent(this, VerticalListActivity.class));
+                return;
+            case R.id.button_grid_view:
+                startActivity(new Intent(this, GridActivity.class));
                 return;
             default:
                 throw new RuntimeException("Unknown button id: " + viewId);
