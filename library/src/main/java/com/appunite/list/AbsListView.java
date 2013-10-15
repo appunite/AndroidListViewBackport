@@ -5865,7 +5865,9 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             // Don't reclaim header or footer views, or views that should be ignored
             if (lp != null && mRecycler.shouldRecycleViewType(lp.viewType)) {
                 views.add(child);
-                ViewCompat.setAccessibilityDelegate(child, null);
+
+                // TODO fix this (j.m.)
+//                ViewCompat.setAccessibilityDelegate(child, null);
                 if (listener != null) {
                     // Pretend they went through the scrap heap
                     listener.onMovedToScrapHeap(child);
@@ -6313,7 +6315,8 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                 mScrapViews[viewType].add(scrap);
             }
 
-            ViewCompat.setAccessibilityDelegate(scrap, null);
+            // TODO fix this (j.m.)
+//            ViewCompat.setAccessibilityDelegate(scrap, null);
             if (mRecyclerListener != null) {
                 mRecyclerListener.onMovedToScrapHeap(scrap);
             }
@@ -6375,7 +6378,8 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
                     lp.scrappedFromPosition = mFirstActivePosition + i;
                     scrapViews.add(victim);
 
-                    ViewCompat.setAccessibilityDelegate(victim, null);
+                    // TODO fix this (j.m.)
+//                    ViewCompat.setAccessibilityDelegate(victim, null);
                     if (hasListener) {
                         mRecyclerListener.onMovedToScrapHeap(victim);
                     }
