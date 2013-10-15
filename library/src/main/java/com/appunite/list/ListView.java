@@ -18,6 +18,7 @@ package com.appunite.list;
 
 import com.google.common.collect.Lists;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
@@ -26,6 +27,7 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.support.v4.view.KeyEventCompat;
 import android.util.AttributeSet;
 import android.util.SparseBooleanArray;
 import android.view.FocusFinder;
@@ -1124,7 +1126,7 @@ public class ListView extends AbsListView {
 
             childWidth = child.getMeasuredWidth();
             childHeight = child.getMeasuredHeight();
-            childState = combineMeasuredStates(childState, child.getMeasuredState());
+            childState = Compat.combineMeasuredStates(childState, Compat.getMeasuredState(child));
 
             if (recycleOnMeasure() && mRecycler.shouldRecycleViewType(
                     ((LayoutParams) child.getLayoutParams()).viewType)) {
@@ -1922,7 +1924,7 @@ public class ListView extends AbsListView {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB &&
                 recycled && (((AbsListView.LayoutParams)child.getLayoutParams()).scrappedFromPosition)
                 != position) {
-            child.jumpDrawablesToCurrentState();
+            Compat.jumpDrawablesToCurrentState(child);
         }
     }
 
@@ -2120,7 +2122,7 @@ public class ListView extends AbsListView {
         if (action != KeyEvent.ACTION_UP) {
             switch (keyCode) {
             case KeyEvent.KEYCODE_DPAD_UP:
-                if (event.hasNoModifiers()) {
+                if (KeyEventCompat.hasNoModifiers(event)) {
                     handled = resurrectSelectionIfNeeded();
                     if (!handled) {
                         while (count-- > 0) {
@@ -2131,13 +2133,13 @@ public class ListView extends AbsListView {
                             }
                         }
                     }
-                } else if (event.hasModifiers(KeyEvent.META_ALT_ON)) {
+                } else if (KeyEventCompat.hasModifiers(event, KeyEvent.META_ALT_ON)) {
                     handled = resurrectSelectionIfNeeded() || fullScroll(FOCUS_UP);
                 }
                 break;
 
             case KeyEvent.KEYCODE_DPAD_DOWN:
-                if (event.hasNoModifiers()) {
+                if (KeyEventCompat.hasNoModifiers(event)) {
                     handled = resurrectSelectionIfNeeded();
                     if (!handled) {
                         while (count-- > 0) {
@@ -2148,26 +2150,26 @@ public class ListView extends AbsListView {
                             }
                         }
                     }
-                } else if (event.hasModifiers(KeyEvent.META_ALT_ON)) {
+                } else if (KeyEventCompat.hasModifiers(event, KeyEvent.META_ALT_ON)) {
                     handled = resurrectSelectionIfNeeded() || fullScroll(FOCUS_DOWN);
                 }
                 break;
 
             case KeyEvent.KEYCODE_DPAD_LEFT:
-                if (event.hasNoModifiers()) {
+                if (KeyEventCompat.hasNoModifiers(event)) {
                     handled = handleHorizontalFocusWithinListItem(View.FOCUS_LEFT);
                 }
                 break;
 
             case KeyEvent.KEYCODE_DPAD_RIGHT:
-                if (event.hasNoModifiers()) {
+                if (KeyEventCompat.hasNoModifiers(event)) {
                     handled = handleHorizontalFocusWithinListItem(View.FOCUS_RIGHT);
                 }
                 break;
 
             case KeyEvent.KEYCODE_DPAD_CENTER:
             case KeyEvent.KEYCODE_ENTER:
-                if (event.hasNoModifiers()) {
+                if (KeyEventCompat.hasNoModifiers(event)) {
                     handled = resurrectSelectionIfNeeded();
                     if (!handled
                             && event.getRepeatCount() == 0 && getChildCount() > 0) {
@@ -2179,9 +2181,9 @@ public class ListView extends AbsListView {
 
             case KeyEvent.KEYCODE_SPACE:
                 if (mPopup == null || !mPopup.isShowing()) {
-                    if (event.hasNoModifiers()) {
+                    if (KeyEventCompat.hasNoModifiers(event)) {
                         handled = resurrectSelectionIfNeeded() || pageScroll(FOCUS_DOWN);
-                    } else if (event.hasModifiers(KeyEvent.META_SHIFT_ON)) {
+                    } else if (KeyEventCompat.hasModifiers(event, KeyEvent.META_SHIFT_ON)) {
                         handled = resurrectSelectionIfNeeded() || pageScroll(FOCUS_UP);
                     }
                     handled = true;
@@ -2189,29 +2191,29 @@ public class ListView extends AbsListView {
                 break;
 
             case KeyEvent.KEYCODE_PAGE_UP:
-                if (event.hasNoModifiers()) {
+                if (KeyEventCompat.hasNoModifiers(event)) {
                     handled = resurrectSelectionIfNeeded() || pageScroll(FOCUS_UP);
-                } else if (event.hasModifiers(KeyEvent.META_ALT_ON)) {
+                } else if (KeyEventCompat.hasModifiers(event, KeyEvent.META_ALT_ON)) {
                     handled = resurrectSelectionIfNeeded() || fullScroll(FOCUS_UP);
                 }
                 break;
 
             case KeyEvent.KEYCODE_PAGE_DOWN:
-                if (event.hasNoModifiers()) {
+                if (KeyEventCompat.hasNoModifiers(event)) {
                     handled = resurrectSelectionIfNeeded() || pageScroll(FOCUS_DOWN);
-                } else if (event.hasModifiers(KeyEvent.META_ALT_ON)) {
+                } else if (KeyEventCompat.hasModifiers(event, KeyEvent.META_ALT_ON)) {
                     handled = resurrectSelectionIfNeeded() || fullScroll(FOCUS_DOWN);
                 }
                 break;
 
             case KeyEvent.KEYCODE_MOVE_HOME:
-                if (event.hasNoModifiers()) {
+                if (KeyEventCompat.hasNoModifiers(event)) {
                     handled = resurrectSelectionIfNeeded() || fullScroll(FOCUS_UP);
                 }
                 break;
 
             case KeyEvent.KEYCODE_MOVE_END:
-                if (event.hasNoModifiers()) {
+                if (KeyEventCompat.hasNoModifiers(event)) {
                     handled = resurrectSelectionIfNeeded() || fullScroll(FOCUS_DOWN);
                 }
                 break;
@@ -2224,9 +2226,9 @@ public class ListView extends AbsListView {
                 //     another widget.  Leaving this behavior disabled for now but
                 //     perhaps it should be configurable (and more comprehensive).
                 if (false) {
-                    if (event.hasNoModifiers()) {
+                    if (KeyEventCompat.hasNoModifiers(event)) {
                         handled = resurrectSelectionIfNeeded() || arrowScroll(FOCUS_DOWN);
-                    } else if (event.hasModifiers(KeyEvent.META_SHIFT_ON)) {
+                    } else if (KeyEventCompat.hasModifiers(event, KeyEvent.META_SHIFT_ON)) {
                         handled = resurrectSelectionIfNeeded() || arrowScroll(FOCUS_UP);
                     }
                 }
@@ -3688,6 +3690,7 @@ public class ListView extends AbsListView {
         event.setClassName(ListView.class.getName());
     }
 
+    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Override
     public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
         super.onInitializeAccessibilityNodeInfo(info);

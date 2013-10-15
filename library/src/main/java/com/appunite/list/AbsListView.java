@@ -30,6 +30,7 @@ import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.v4.view.AccessibilityDelegateCompat;
+import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.accessibility.AccessibilityNodeInfoCompat;
 import android.support.v4.widget.EdgeEffectCompat;
@@ -1997,7 +1998,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             }
             mRecycler.markChildrenDirty();
         }
-        
+
         if (mFastScroller != null && mItemCount != mOldItemCount) {
             mFastScroller.onItemCountChanged(mOldItemCount, mItemCount);
         }
@@ -3600,7 +3601,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
 
         case MotionEvent.ACTION_POINTER_DOWN: {
             // New pointers take over dragging duties
-            final int index = ev.getActionIndex();
+            final int index = MotionEventCompat.getActionIndex(ev);
             final int id = ev.getPointerId(index);
             final int x = (int) ev.getX(index);
             final int y = (int) ev.getY(index);
@@ -5075,7 +5076,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         requestLayout();
         invalidate();
     }
-    
+
     /**
      * If there is a selection returns false.
      * Otherwise resurrects the selection and returns true if resurrected.
