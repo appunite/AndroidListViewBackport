@@ -1,6 +1,8 @@
 package com.example.list;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ListAdapter;
 import android.widget.SimpleAdapter;
 
@@ -11,9 +13,10 @@ import com.google.common.collect.Maps;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
 import com.actionbarsherlock.app.SherlockActivity;
 
-public class MainActivity extends SherlockActivity {
+public class MainActivity extends SherlockActivity implements View.OnClickListener {
 
     private static final String PROJECTION_NAME = "name";
 
@@ -21,22 +24,22 @@ public class MainActivity extends SherlockActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
+        findViewById(R.id.button_horizontal_list).setOnClickListener(this);
+        findViewById(R.id.button_vertical_list).setOnClickListener(this);
+    }
 
-        final HorizontalListView listView = (HorizontalListView) findViewById(android.R.id.list);
-
-        List<HashMap<String, String>> data = new ArrayList<HashMap<String, String>>();
-        for (int i = 0; i < 100; ++i) {
-            final HashMap<String,String> map = Maps.newHashMap();
-            map.put(PROJECTION_NAME, String.format("Item: %d", i));
-            data.add(map);
+    @Override
+    public void onClick(View view) {
+        final int viewId = view.getId();
+        switch (viewId) {
+            case R.id.button_horizontal_list:
+                startActivity(new Intent(this, HorizontalListActivity.class));
+                return;
+            case R.id.button_vertical_list:
+                startActivity(new Intent(this, VerticalListActivity.class));
+                return;
+            default:
+                throw new RuntimeException("Unknown button id: " + viewId);
         }
-        ListAdapter adapter = new SimpleAdapter(this,
-                data,
-                R.layout.horizontal_simple_list_item,
-                new String[] {PROJECTION_NAME},
-                new int[] {android.R.id.text1});
-        listView.setAdapter(adapter);
-        // Currently not working
-//        listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
     }
 }
