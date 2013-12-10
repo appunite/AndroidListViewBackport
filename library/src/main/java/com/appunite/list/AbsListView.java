@@ -1648,7 +1648,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             ss.position = getSelectedItemPosition();
             ss.firstId = INVALID_POSITION;
         } else {
-            if (haveChildren && mFirstPosition > 0) {
+            if (haveChildren && mFirstPosition >= 0) {
                 // Remember the position of the first child.
                 // We only do this if we are not currently at the top of
                 // the list, for two reasons:
