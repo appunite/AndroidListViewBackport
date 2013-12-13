@@ -9,18 +9,24 @@
             android:id="@+id/button_horizontal_list"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
-            android:text="HorizontalList"/>
+            android:text="@string/label_horizontal_list"/>
+
+    <Button
+            android:id="@+id/button_horizontal_image_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/label_horizontal_image_list"/>
 
     <Button
             android:id="@+id/button_vertical_list"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
-            android:text="VerticalList"/>
+            android:text="@string/label_vertical_list"/>
 
     <Button
             android:id="@+id/button_grid_view"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
-            android:text="GridView"/>
+            android:text="@string/label_gridview"/>
 
 </LinearLayout>

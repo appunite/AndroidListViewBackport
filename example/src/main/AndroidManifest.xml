@@ -19,8 +19,10 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".HorizontalListActivity" android:label="HorizontalList"/>
-        <activity android:name=".VerticalListActivity" android:label="VerticalList"/>
-        <activity android:name=".GridActivity" android:label="GridView"/>
+        <activity android:name=".HorizontalListActivity" android:label="@string/label_horizontal_list"/>
+        <activity android:name=".HorizontalImageListActivity" android:label="@string/label_horizontal_image_list"/>
+        <activity android:name=".SingleImageActivity" android:label="@string/label_horizontal_image_list"/>
+        <activity android:name=".VerticalListActivity" android:label="@string/label_vertical_list"/>
+        <activity android:name=".GridActivity" android:label="@string/label_gridview"/>
     </application>
 </manifest> 

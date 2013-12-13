@@ -6,7 +6,6 @@ import android.widget.SimpleAdapter;
 
 import com.actionbarsherlock.app.SherlockActivity;
 import com.appunite.list.GridView;
-import com.appunite.list.ListView;
 import com.google.common.collect.Maps;
 
 import java.util.ArrayList;

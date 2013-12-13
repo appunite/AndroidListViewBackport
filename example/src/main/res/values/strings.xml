@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ListViewBackport</string>
+
+    <!-- labels -->
+    <string name="label_horizontal_list">Horizontal List</string>
+    <string name="label_horizontal_image_list">Horizontal Image List</string>
+    <string name="label_single_image">Single image</string>
+    <string name="label_vertical_list">Vertical List</string>
+    <string name="label_gridview">GridView</string>
 </resources>
