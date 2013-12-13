@@ -833,6 +833,8 @@ public abstract class AbsHorizontalListView extends HorizontalAdapterView<ListAd
             }
         }
 
+        mTouchMode = TOUCH_MODE_REST;
+
         if (mCheckStates != null) {
             mCheckStates.clear();
         }

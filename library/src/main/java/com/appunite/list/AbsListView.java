@@ -847,6 +847,8 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             }
         }
 
+        mTouchMode = TOUCH_MODE_REST;
+
         if (mCheckStates != null) {
             mCheckStates.clear();
         }
