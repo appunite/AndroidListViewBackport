@@ -3,9 +3,11 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.6.+'
+        classpath 'com.jakewharton.sdkmanager:gradle-plugin:0.10.+'
+        classpath 'com.android.tools.build:gradle:0.10.+'
     }
 }
+apply plugin: 'android-sdk-manager'
 apply plugin: 'android'
 
 repositories {
@@ -15,16 +17,22 @@ repositories {
 
 dependencies {
     compile project(":library")
-    //compile "com.appunite:listviewbackport:1.2"
-//    compile "com.appunite:actionbarsherlock:4.1"
+    //compile "com.appunite:listviewbackport:1.3"
 }
 
 android {
-    compileSdkVersion 17
-    buildToolsVersion "17"
+    compileSdkVersion 19
+    buildToolsVersion "19.1"
 
     defaultConfig {
         minSdkVersion 9
-        targetSdkVersion 17
+        targetSdkVersion 19
+    }
+
+    lintOptions {
+        abortOnError true
+        disable 'InvalidPackage'
+        xmlOutput file("${reporting.baseDir}/lint/lint-results.xml")
+        htmlOutput file("${reporting.baseDir}/lint/lint-results.html")
     }
 }

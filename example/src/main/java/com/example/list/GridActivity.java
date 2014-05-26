@@ -1,20 +1,65 @@
 package com.example.list;
 
+import android.content.Context;
 import android.os.Bundle;
-import android.widget.ListAdapter;
-import android.widget.SimpleAdapter;
-
-import com.actionbarsherlock.app.SherlockActivity;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
+import android.support.v7.app.ActionBarActivity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.TextView;
 import com.appunite.list.GridView;
-import com.google.common.collect.Maps;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-public class GridActivity extends SherlockActivity {
+public class GridActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Object> {
 
-    private static final String PROJECTION_NAME = "name";
+    private static final int LOADER_MAIN = 0;
+
+    private MyAdapter mAdapter;
+
+    public static class MyAdapter extends BaseAdapter {
+
+        private LayoutInflater mInflater;
+        private int mCount = 0;
+
+        public MyAdapter(Context context) {
+            mInflater = LayoutInflater.from(context);
+        }
+
+        public void swapData(int count) {
+            mCount = count;
+            notifyDataSetChanged();
+        }
+
+        @Override
+        public int getCount() {
+            return mCount;
+        }
+
+        @Override
+        public Object getItem(int i) {
+            return i;
+        }
+
+        @Override
+        public long getItemId(int i) {
+            return i;
+        }
+
+        @Override
+        public View getView(int i, View view, ViewGroup viewGroup) {
+            if (view == null) {
+                view = checkNotNull(mInflater.inflate(R.layout.grid_item, viewGroup, false));
+            }
+            final TextView textView = (TextView) view.findViewById(android.R.id.text1);
+            textView.setText(String.format("Item: %d", i));
+            return view;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,17 +68,39 @@ public class GridActivity extends SherlockActivity {
 
         final GridView listView = (GridView) findViewById(android.R.id.list);
 
-        List<HashMap<String, String>> data = new ArrayList<HashMap<String, String>>();
-        for (int i = 0; i < 100; ++i) {
-            final HashMap<String, String> map = Maps.newHashMap();
-            map.put(PROJECTION_NAME, String.format("Item: %d", i));
-            data.add(map);
-        }
-        ListAdapter adapter = new SimpleAdapter(this,
-                data,
-                R.layout.grid_item,
-                new String[]{PROJECTION_NAME},
-                new int[]{android.R.id.text1});
-        listView.setAdapter(adapter);
+        mAdapter = new MyAdapter(this);
+        listView.setAdapter(mAdapter);
+
+        getSupportLoaderManager().initLoader(LOADER_MAIN, null, this);
     }
+
+    @Override
+    public Loader<Object> onCreateLoader(int i, Bundle bundle) {
+        return new AsyncTaskLoader<Object>(this) {
+            @Override
+            public Object loadInBackground() {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ignored) {
+                }
+                return null;
+            }
+
+            @Override
+            protected void onStartLoading() {
+                forceLoad();
+            }
+        };
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Object> objectLoader, Object o) {
+        mAdapter.swapData(100);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Object> objectLoader) {
+        mAdapter.swapData(0);
+    }
+
 }

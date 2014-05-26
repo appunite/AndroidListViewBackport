@@ -153,7 +153,7 @@ public class ListView extends AbsListView {
                     android.R.layout.simple_list_item_1, entries));
         }
 
-        final Drawable d = a.getDrawable(R.styleable.ListView_divider);
+        final Drawable d = a.getDrawable(R.styleable.ListView_android_divider);
         if (d != null) {
             // If a divider is specified use its intrinsic width for divider width
             setDivider(d);
@@ -173,7 +173,7 @@ public class ListView extends AbsListView {
 
         // Use the width specified, zero being the default
         final int dividerHeight = a.getDimensionPixelSize(
-                R.styleable.ListView_dividerHeight, 0);
+                R.styleable.ListView_android_dividerHeight, 0);
         if (dividerHeight != 0) {
             setDividerHeight(dividerHeight);
         }

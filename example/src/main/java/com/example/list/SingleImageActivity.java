@@ -1,13 +1,12 @@
 package com.example.list;
 
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
+import android.view.MenuItem;
 import android.widget.ImageView;
 
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.SherlockActivity;
-import com.actionbarsherlock.view.MenuItem;
-
-public class SingleImageActivity extends SherlockActivity {
+public class SingleImageActivity extends ActionBarActivity {
 
     public static final String IMAGE_RES_ID = "image_res_id";
 

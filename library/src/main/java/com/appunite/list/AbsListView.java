@@ -23,17 +23,13 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Debug;
-import android.os.Handler;
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.os.*;
 import android.support.v4.view.AccessibilityDelegateCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.accessibility.AccessibilityNodeInfoCompat;
 import android.support.v4.widget.EdgeEffectCompat;
+import android.support.v7.view.ActionMode;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -41,37 +37,14 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
-
-import com.actionbarsherlock.view.ActionMode;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.Gravity;
-import android.view.HapticFeedbackConstants;
-import android.view.InputDevice;
-import android.view.KeyEvent;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
-import android.view.VelocityTracker;
-import android.view.View;
-import android.view.ViewConfiguration;
-import android.view.ViewDebug;
-import android.view.ViewGroup;
-import android.view.ViewParent;
-import android.view.ViewTreeObserver;
+import android.view.*;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
-import android.view.inputmethod.BaseInputConnection;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputConnection;
-import android.view.inputmethod.InputConnectionWrapper;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.Checkable;
-import android.widget.EditText;
-import android.widget.Filter;
-import android.widget.Filterable;
-import android.widget.ListAdapter;
-import android.widget.PopupWindow;
+import android.view.inputmethod.*;
+import android.widget.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -5935,7 +5908,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
      * {@link #onItemCheckedStateChanged(ActionMode, int, long, boolean)} events when the user
      * selects and deselects list items.
      */
-    public interface MultiChoiceModeListener extends com.actionbarsherlock.view.ActionMode.Callback {
+    public interface MultiChoiceModeListener extends android.support.v7.view.ActionMode.Callback {
         /**
          * Called when an item is checked or unchecked during selection mode.
          *
@@ -5960,8 +5933,8 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             return mWrapped != null;
         }
 
-        public boolean onCreateActionMode(com.actionbarsherlock.view.ActionMode mode,
-                                          com.actionbarsherlock.view.Menu menu) {
+        public boolean onCreateActionMode(android.support.v7.view.ActionMode mode,
+                                          Menu menu) {
             if (mWrapped.onCreateActionMode(mode, menu)) {
                 // Initialize checked graphic state?
                 setLongClickable(false);
@@ -5970,13 +5943,13 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
             return false;
         }
 
-        public boolean onPrepareActionMode(com.actionbarsherlock.view.ActionMode mode,
-                                           com.actionbarsherlock.view.Menu menu) {
+        public boolean onPrepareActionMode(android.support.v7.view.ActionMode mode,
+                                           Menu menu) {
             return mWrapped.onPrepareActionMode(mode, menu);
         }
 
-        public boolean onActionItemClicked(com.actionbarsherlock.view.ActionMode mode,
-                                           com.actionbarsherlock.view.MenuItem item) {
+        public boolean onActionItemClicked(android.support.v7.view.ActionMode mode,
+                                           MenuItem item) {
             return mWrapped.onActionItemClicked(mode, item);
         }
 

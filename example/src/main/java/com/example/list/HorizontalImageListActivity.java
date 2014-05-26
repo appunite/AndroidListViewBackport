@@ -2,13 +2,12 @@ package com.example.list;
 
 import android.content.Intent;
 import android.os.Bundle;
-
-import com.actionbarsherlock.app.SherlockActivity;
+import android.support.v7.app.ActionBarActivity;
 import com.appunite.list.ListView;
 import com.example.list.adapter.HorizontalImageItemAdapter;
 import com.example.list.adapter.ImageListAdapter;
 
-public class HorizontalImageListActivity extends SherlockActivity implements
+public class HorizontalImageListActivity extends ActionBarActivity implements
         HorizontalImageItemAdapter.OnImageClickListener {
 
     @Override

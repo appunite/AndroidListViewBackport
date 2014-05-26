@@ -2,11 +2,10 @@ package com.example.list;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.view.View;
 
-import com.actionbarsherlock.app.SherlockActivity;
-
-public class MainActivity extends SherlockActivity implements View.OnClickListener {
+public class MainActivity extends ActionBarActivity implements View.OnClickListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

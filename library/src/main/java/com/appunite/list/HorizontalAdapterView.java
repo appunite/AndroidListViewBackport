@@ -23,25 +23,16 @@ import android.database.DataSetObserver;
 import android.os.Build;
 import android.os.Parcelable;
 import android.os.SystemClock;
+import android.support.v7.app.ActionBarActivity;
 import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.util.TypedValue;
-import android.view.ActionMode;
+import android.view.*;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.MotionEvent;
-import android.view.SoundEffectConstants;
-import android.view.View;
-import android.view.ViewDebug;
-import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Adapter;
-
-import com.actionbarsherlock.app.SherlockActivity;
-import com.actionbarsherlock.internal.view.menu.MenuWrapper;
-import com.actionbarsherlock.view.MenuInflater;
 
 /**
  * An AdapterView is a view whose children are determined by an {@link android.widget.Adapter}.
@@ -1430,11 +1421,11 @@ public abstract class HorizontalAdapterView<T extends Adapter> extends ViewGroup
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     private class ActionModeCallbackWrapper implements ActionMode.Callback {
         private HorizontalAdapterView<?> mAdapterView;
-        private final com.actionbarsherlock.view.ActionMode.Callback mCallback;
+        private final android.support.v7.view.ActionMode.Callback mCallback;
         private ActionModeWrapper mActionModeWrapper;
 
         public ActionModeCallbackWrapper(HorizontalAdapterView<?> adapterView,
-                                         com.actionbarsherlock.view.ActionMode.Callback callback) {
+                                         android.support.v7.view.ActionMode.Callback callback) {
             mAdapterView = adapterView;
             mCallback = callback;
         }
@@ -1455,8 +1446,7 @@ public abstract class HorizontalAdapterView<T extends Adapter> extends ViewGroup
         @Override
         public boolean onActionItemClicked(ActionMode mode,
                                            android.view.MenuItem item) {
-            return mCallback.onActionItemClicked(mActionMode,
-                    mActionModeWrapper.getMenu().findItem(item));
+            return mCallback.onActionItemClicked(mActionMode, item);
         }
 
         @Override
@@ -1466,9 +1456,8 @@ public abstract class HorizontalAdapterView<T extends Adapter> extends ViewGroup
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    private static class ActionModeWrapper extends com.actionbarsherlock.view.ActionMode {
+    private static class ActionModeWrapper extends android.support.v7.view.ActionMode {
         private final ActionMode mActionMode;
-        private MenuWrapper mMenu = null;
         private final HorizontalAdapterView<?> mAdapterView;
 
         public ActionModeWrapper(HorizontalAdapterView<?> adapterView, ActionMode mode) {
@@ -1512,11 +1501,8 @@ public abstract class HorizontalAdapterView<T extends Adapter> extends ViewGroup
         }
 
         @Override
-        public MenuWrapper getMenu() {
-            if (mMenu == null) {
-                mMenu = new MenuWrapper(mActionMode.getMenu());
-            }
-            return mMenu;
+        public Menu getMenu() {
+            return mActionMode.getMenu();
         }
 
         @Override
@@ -1555,7 +1541,7 @@ public abstract class HorizontalAdapterView<T extends Adapter> extends ViewGroup
     // Compat StateSet method (j.m.)
     public static final int[] NOTHING_COMPAT = new int[] { 0 };
 
-    private com.actionbarsherlock.view.ActionMode.Callback mOldCallback = null;
+    private android.support.v7.view.ActionMode.Callback mOldCallback = null;
     private ActionMode.Callback mNewCallback = null;
 
     /** Reference to our custom menu inflater which supports action items. */
@@ -1572,10 +1558,10 @@ public abstract class HorizontalAdapterView<T extends Adapter> extends ViewGroup
         return mMenuInflater;
     }
 
-    private com.actionbarsherlock.view.ActionMode mActionMode;
+    private android.support.v7.view.ActionMode mActionMode;
 
-    protected com.actionbarsherlock.view.ActionMode startActionModeCompat(
-            final com.actionbarsherlock.view.ActionMode.Callback callback) {
+    protected android.support.v7.view.ActionMode startActionModeCompat(
+            final android.support.v7.view.ActionMode.Callback callback) {
         if (callback == null) {
             throw new IllegalArgumentException("Callback could not be null");
         }
@@ -1594,9 +1580,9 @@ public abstract class HorizontalAdapterView<T extends Adapter> extends ViewGroup
             return mActionMode;
         }
         final Context context = getContext();
-        if (context instanceof SherlockActivity) {
-            SherlockActivity activity = (SherlockActivity)context;
-            mActionMode = activity.startActionMode(callback);
+        if (context instanceof ActionBarActivity) {
+            ActionBarActivity activity = (ActionBarActivity)context;
+            mActionMode = activity.startSupportActionMode(callback);
             return mActionMode;
         }
         return null;

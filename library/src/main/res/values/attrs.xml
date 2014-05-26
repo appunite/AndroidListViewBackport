@@ -130,10 +130,10 @@
              this is simpler than populating the ListView programmatically. -->
         <attr name="android:entries" />
         <!-- Drawable or color to draw between list items. -->
-        <attr name="divider" />
+        <attr name="android:divider" />
         <!-- Height of the divider. Will use the intrinsic height of the divider if this
              is not specified. -->
-        <attr name="dividerHeight" format="dimension" />
+        <attr name="android:dividerHeight" />
         <!-- When set to false, the ListView will not draw the divider after each header view.
              The default value is true. -->
         <attr name="headerDividersEnabled" format="boolean" />
