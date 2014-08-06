@@ -48,7 +48,7 @@ import android.widget.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.appunite.list.util.common.base.Preconditions.checkNotNull;
 
 /**
  * Base class that can be used to implement virtualized lists of items. A list does

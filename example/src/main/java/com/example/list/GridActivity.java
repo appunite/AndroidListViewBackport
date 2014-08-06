@@ -13,7 +13,7 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 import com.appunite.list.GridView;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.appunite.list.util.common.base.Preconditions.checkNotNull;
 
 public class GridActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Object> {
 

@@ -11,7 +11,6 @@ import android.widget.Toast;
 import com.appunite.list.AbsHorizontalListView;
 import com.appunite.list.AbsListView;
 import com.appunite.list.HorizontalListView;
-import com.google.common.collect.Maps;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,7 +29,7 @@ public class HorizontalListActivity extends ActionBarActivity {
 
         List<HashMap<String, String>> data = new ArrayList<HashMap<String, String>>();
         for (int i = 0; i < 100; ++i) {
-            final HashMap<String, String> map = Maps.newHashMap();
+            final HashMap<String, String> map = new HashMap<String, String>();
             map.put(PROJECTION_NAME, String.format("Item: %d", i));
             data.add(map);
         }

@@ -42,8 +42,6 @@ import android.widget.Checkable;
 import android.widget.ListAdapter;
 import android.widget.RemoteViews.RemoteView;
 
-import com.google.common.collect.Lists;
-
 import java.util.ArrayList;
 
 /*
@@ -89,8 +87,8 @@ public class HorizontalListView extends AbsHorizontalListView {
      */
     private static final int MIN_SCROLL_PREVIEW_PIXELS = 2;
 
-    private ArrayList<ListView.FixedViewInfo> mHeaderViewInfos = Lists.newArrayList();
-    private ArrayList<ListView.FixedViewInfo> mFooterViewInfos = Lists.newArrayList();
+    private ArrayList<ListView.FixedViewInfo> mHeaderViewInfos = new ArrayList<ListView.FixedViewInfo>();
+    private ArrayList<ListView.FixedViewInfo> mFooterViewInfos = new ArrayList<ListView.FixedViewInfo>();
 
     Drawable mDivider;
     int mDividerWidth;

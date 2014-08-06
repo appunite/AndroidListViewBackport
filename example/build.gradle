@@ -15,7 +15,7 @@ repositories {
 
 dependencies {
     compile project(":library")
-    //compile "com.appunite:listviewbackport:1.4"
+    //compile "com.appunite:listviewbackport:1.5"
 }
 
 android {

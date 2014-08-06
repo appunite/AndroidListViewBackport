@@ -22,13 +22,13 @@ configurations {
 
 dependencies {
     deployerJars 'com.googlesource.gerrit:gs-maven-wagon:3.3.1'
-    compile "com.google.guava:guava:14.0.1"
     compile 'com.android.support:support-v4:20.0.0'
     compile 'com.android.support:appcompat-v7:20.0.0'
+    compile 'com.google.code.findbugs:jsr305:2.0.1'
     compile fileTree(dir: 'libs', include: '*.jar')
 }
 
-def baseVersionName = "1.4"
+def baseVersionName = "1.5"
 
 if (project.hasProperty("versionSuffix")) {
     project.ext.versionSuffix = project.versionSuffix
