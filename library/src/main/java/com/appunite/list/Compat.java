@@ -18,12 +18,14 @@ package com.appunite.list;
 import android.annotation.TargetApi;
 import android.os.Build;
 import android.view.View;
+import android.view.ViewTreeObserver;
 
 public class Compat {
     public static int combineMeasuredStates(int curState, int newState) {
         return curState | newState;
     }
 
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static int getMeasuredState(View view) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             return view.getMeasuredState();
@@ -32,12 +34,14 @@ public class Compat {
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static void jumpDrawablesToCurrentState(View child) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             child.jumpDrawablesToCurrentState();
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static void setActivated(View child, boolean activated) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             child.setActivated(activated);
@@ -50,6 +54,34 @@ public class Compat {
             return (view.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL);
         } else {
             return false;
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    public static void removeOnGlobalLayoutListener(ViewTreeObserver treeObserver, ViewTreeObserver.OnGlobalLayoutListener victim) {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            treeObserver.removeOnGlobalLayoutListener(victim);
+        } else {
+            treeObserver.removeGlobalOnLayoutListener(victim);
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static boolean isHardwareAccelerated(View view) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            return view.isHardwareAccelerated();
+        } else {
+            return false;
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static int getVerticalScrollbarPosition(View view) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            return view.getVerticalScrollbarPosition();
+        } else {
+            return 0;
         }
     }
 }

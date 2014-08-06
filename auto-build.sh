@@ -1,9 +1,27 @@
-export ANDROID_NDK_HOME="$HOME/Android/android-ndk-r9c"
-export ANDROID_HOME="$HOME/Android/adt-bundle-linux-x86_64-20131030/sdk"
+cd "${HOME}/Android"
+echo "Downloading sdk..."
+wget --output-document=android-sdk.tgz --quiet http://dl.google.com/android/android-sdk_r23-linux.tgz || exit 1
+tar xzf android-sdk.tgz > /dev/null || exit 1
+
+export ANDROID_HOME="$HOME/Android/android-sdk-linux"
 export PATH="${PATH}:${ANDROID_HOME}/platform-tools"
 export PATH="${PATH}:${ANDROID_HOME}/tools/proguard/bin"
 export PATH="${PATH}:${ANDROID_HOME}/tools"
 export PATH="${PATH}:${ANDROID_NDK_HOME}"
+
+echo "Updating sdk..."
+echo yes | android update sdk -a -u -t tools > /dev/null || exit 1
+echo yes | android update sdk --filter platform-tools --no-ui --force > /dev/null || exit 1
+echo yes | android update sdk -a -u -t build-tools-19.1.0 > /dev/null || exit 1
+
+echo "Installing android..."
+echo yes | android update sdk --filter android-20 --no-ui --force > /dev/null || exit 1
+
+echo "Installing support libraries..."
+echo yes | android update sdk --filter extra-android-support --no-ui --force > /dev/null || exit 1
+echo yes | android update sdk --filter extra-android-m2repository --no-ui --force > /dev/null || exit 1
+echo yes | android update sdk --filter extra-google-m2repository --no-ui --force > /dev/null || exit 1
+
 
 if [ -f "${HOME}/.ssh/id_rsa" ];
 then

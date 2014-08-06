@@ -1872,7 +1872,7 @@ public class HorizontalListView extends AbsHorizontalListView {
             if (child instanceof Checkable) {
                 ((Checkable) child).setChecked(mCheckStates.get(position));
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                child.setActivated(mCheckStates.get(position));
+                Compat.setActivated(child, mCheckStates.get(position));
             }
         }
 

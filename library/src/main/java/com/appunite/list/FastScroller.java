@@ -306,7 +306,7 @@ class FastScroller {
         mMatchDragPosition = context.getApplicationInfo().targetSdkVersion >=
                 android.os.Build.VERSION_CODES.HONEYCOMB;
 
-        setScrollbarPosition(mList.getVerticalScrollbarPosition());
+        setScrollbarPosition(Compat.getVerticalScrollbarPosition(mList));
     }
     
     void stop() {

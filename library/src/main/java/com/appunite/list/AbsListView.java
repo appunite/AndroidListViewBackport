@@ -1087,8 +1087,8 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
 
             if (child instanceof Checkable) {
                 ((Checkable) child).setChecked(mCheckStates.get(position));
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                child.setActivated(mCheckStates.get(position));
+            } else {
+                Compat.setActivated(child, mCheckStates.get(position));
             }
         }
     }
@@ -1339,6 +1339,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
     }
 
     @Override
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     public void onInitializeAccessibilityNodeInfo(AccessibilityNodeInfo info) {
         super.onInitializeAccessibilityNodeInfo(info);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
@@ -2575,11 +2576,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
         final ViewTreeObserver treeObserver = getViewTreeObserver();
         treeObserver.removeOnTouchModeChangeListener(this);
         if (mTextFilterEnabled && mPopup != null) {
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                treeObserver.removeOnGlobalLayoutListener(this);
-            } else {
-                treeObserver.removeGlobalOnLayoutListener(this);
-            }
+            Compat.removeOnGlobalLayoutListener(treeObserver, this);
             mGlobalLayoutListenerAddedFilter = false;
         }
 

@@ -17,6 +17,7 @@
 package com.appunite.list;
 
 import android.R;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.database.DataSetObserver;
@@ -753,6 +754,7 @@ public abstract class HorizontalAdapterView<T extends Adapter> extends ViewGroup
      * we have an empty view, display it.  In all the other cases, make sure that the listview
      * is VISIBLE and that the empty view is GONE (if it's not null).
      */
+    @SuppressLint("WrongCall")
     private void updateEmptyStatus(boolean empty) {
         if (isInFilterMode()) {
             empty = false;
@@ -1287,7 +1289,7 @@ public abstract class HorizontalAdapterView<T extends Adapter> extends ViewGroup
     protected void invalidateParentIfNeededUnhide() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             final ViewParent parent = getParent();
-            if (isHardwareAccelerated() && parent instanceof View) {
+            if (Compat.isHardwareAccelerated(this) && parent instanceof View) {
                 ((View) parent).invalidate();
             }
         }
@@ -1407,15 +1409,6 @@ public abstract class HorizontalAdapterView<T extends Adapter> extends ViewGroup
     protected boolean hasOpaqueScrollbarsUnhide() {
         // TODO I actually do not know what to return... just return false (j.m.)
         return false;
-    }
-
-    // Compat View method (j.m.)
-    public boolean isHardwareAcceleratedCompat() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            return isHardwareAccelerated();
-        } else {
-            return false;
-        }
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
@@ -1560,6 +1553,7 @@ public abstract class HorizontalAdapterView<T extends Adapter> extends ViewGroup
 
     private android.support.v7.view.ActionMode mActionMode;
 
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     protected android.support.v7.view.ActionMode startActionModeCompat(
             final android.support.v7.view.ActionMode.Callback callback) {
         if (callback == null) {
